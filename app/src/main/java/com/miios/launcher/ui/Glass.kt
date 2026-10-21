@@ -83,25 +83,16 @@ fun GlassSurface(
     }
 }
 
-/** The ambient scene: soft gradient, three colour fields for the glass to pick up, and the Wii's faint scanlines. */
+/** The Wii Menu's backdrop: white fading to soft grey, with its faint horizontal lines. */
 @Composable
 fun Scenery(colors: MiiColors, modifier: Modifier = Modifier) {
     Canvas(modifier.fillMaxSize()) {
         drawRect(Brush.verticalGradient(listOf(colors.bg1, colors.bg2)))
         val w = size.width
-        fun blob(color: Color, cx: Float, cy: Float, r: Float) = drawCircle(
-            Brush.radialGradient(listOf(color.copy(alpha = 0.6f), color.copy(alpha = 0f)), Offset(cx, cy), r),
-            radius = r,
-            center = Offset(cx, cy),
-        )
-        blob(colors.blob1, w * 0.13f, w * 0.09f, w * 0.30f)
-        blob(colors.blob2, w * 0.88f, w * 0.20f, w * 0.24f)
-        blob(colors.blob3, w * 0.51f, size.height * 1.02f, w * 0.28f)
-        val lineColor = Color.White.copy(alpha = if (colors == NightColors) 0.03f else 0.13f)
         val step = w * 0.0062f
         var y = step
         while (y < size.height) {
-            drawLine(lineColor, Offset(0f, y), Offset(w, y), strokeWidth = w * 0.0007f)
+            drawLine(colors.lines, Offset(0f, y), Offset(w, y), strokeWidth = w * 0.0009f)
             y += step
         }
     }

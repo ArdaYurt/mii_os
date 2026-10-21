@@ -19,10 +19,17 @@ sealed interface ChannelArt {
 
     /** No banner: the app icon centred on a colour taken from the icon itself. */
     data class IconOnColor(val icon: ImageBitmap, val background: Color) : ChannelArt
+
+    /** A favourite channel's Mii_OS art, drawn as vector shapes and text: sharp at 1080p and 4K. */
+    data class Styled(val style: ChannelStyle) : ChannelArt
+
+    /** Nothing to show (no banner, icon or style). */
+    data object Blank : ChannelArt
 }
 
 /**
- * Resolves art for a channel in this order: the Mii_OS art pack, the app's banner, the app's icon.
+ * Resolves art for a channel in this order: the art pack folder, Mii_OS art for favourites,
+ * the app's banner, the app's icon.
  * Images are decoded at the size they are drawn, never at full 4K, to stay light on the box's 2 GB.
  */
 object ChannelArtLoader {
@@ -31,6 +38,7 @@ object ChannelArtLoader {
         override fun sizeOf(key: String, value: ChannelArt): Int = when (value) {
             is ChannelArt.FullBleed -> value.image.width * value.image.height * 4
             is ChannelArt.IconOnColor -> value.icon.width * value.icon.height * 4
+            is ChannelArt.Styled, ChannelArt.Blank -> 1
         }
     }
 
@@ -41,6 +49,7 @@ object ChannelArtLoader {
         cache.get(key)?.let { return it }
         return withContext(Dispatchers.IO) {
             val art = fromArtPack(context, app.packageName, width, height)
+                ?: ChannelStyles.forPackage(app.packageName)?.let { ChannelArt.Styled(it) }
                 ?: app.banner?.let { ChannelArt.FullBleed(it.toBitmap(width, height, Bitmap.Config.ARGB_8888).asImageBitmap()) }
                 ?: iconArt(app, height)
             cache.put(key, art)
@@ -66,8 +75,9 @@ object ChannelArtLoader {
     }
 
     private fun iconArt(app: InstalledApp, tileHeight: Int): ChannelArt {
+        val drawable = app.icon ?: return ChannelArt.Blank
         val size = (tileHeight * 0.5f).toInt().coerceAtLeast(48)
-        val icon = app.icon.toBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val icon = drawable.toBitmap(size, size, Bitmap.Config.ARGB_8888)
         // Average the icon down to one pixel, then darken it so white text and icons stay readable.
         val average = Color(Bitmap.createScaledBitmap(icon, 1, 1, true).getPixel(0, 0))
         val background = Color(

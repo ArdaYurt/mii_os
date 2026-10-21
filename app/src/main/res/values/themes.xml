@@ -6,5 +6,5 @@
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowAnimationStyle">@null</item>
     </style>
-    <color name="window_bg">#FFF7FAFC</color>
+    <color name="window_bg">#FFFFFFFF</color>
 </resources>

@@ -16,6 +16,7 @@ import com.miios.launcher.data.InstalledApp
 import com.miios.launcher.service.HomeButtonService
 import com.miios.launcher.ui.LauncherActions
 import com.miios.launcher.ui.LauncherScreen
+import com.miios.launcher.ui.SettingsItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -27,15 +28,40 @@ class MainActivity : ComponentActivity() {
     private val homeCaptureOn = mutableStateOf(true)
 
     private val actions = object : LauncherActions {
-        override fun launch(app: InstalledApp) = start(app.launchIntent)
-        override fun openAppInfo(app: InstalledApp) = start(
-            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${app.packageName}"))
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        )
-        override fun openSettings() = start(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        override fun openHomeSetup() = start(
-            Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        )
+        override fun launch(app: InstalledApp) {
+            val intent = app.launchIntent
+            if (intent != null) start(intent) else openStore(app.packageName)
+        }
+
+        override fun openAppInfo(app: InstalledApp) {
+            if (!app.installed) return openStore(app.packageName)
+            start(
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${app.packageName}"))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }
+
+        override fun openSystemSetting(item: SettingsItem) {
+            val action = when (item) {
+                SettingsItem.Network -> Settings.ACTION_WIFI_SETTINGS
+                SettingsItem.Display -> Settings.ACTION_DISPLAY_SETTINGS
+                SettingsItem.Apps -> Settings.ACTION_APPLICATION_SETTINGS
+                SettingsItem.HomeButton -> Settings.ACTION_ACCESSIBILITY_SETTINGS
+                SettingsItem.DateTime -> Settings.ACTION_DATE_SETTINGS
+                SettingsItem.System -> Settings.ACTION_SETTINGS
+            }
+            // Google TV doesn't have every settings page; fall back to the main one.
+            val intent = Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (!tryStart(intent)) start(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }
+    }
+
+    /** Play Store page for a favourite channel that isn't installed yet. */
+    private fun openStore(pkg: String) {
+        val market = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (!tryStart(market)) {
+            Toast.makeText(this, "Play Store isn't available here. Install $pkg from another device.", Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,6 +90,13 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         // Home pressed while Mii_OS is already showing: go back to the first page.
         homePresses.intValue++
+    }
+
+    private fun tryStart(intent: Intent): Boolean = try {
+        startActivity(intent)
+        true
+    } catch (e: ActivityNotFoundException) {
+        false
     }
 
     private fun start(intent: Intent) {
