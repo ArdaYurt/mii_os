@@ -1,7 +1,7 @@
 @echo off
 rem Mii_OS speed-up for the Xiaomi Mi Box S (2nd gen, Google TV).
-rem Turns off background apps with "pm disable-user" (nothing is deleted) and applies a few
-rem speed settings. "mii-speedup.bat restore" (or mii-restore.bat) undoes all of it.
+rem Installs Mii_OS, turns off background apps with "pm disable-user" (nothing is deleted)
+rem and applies a few speed settings. "mii-speedup.bat restore" (or mii-restore.bat) undoes all of it.
 setlocal EnableExtensions EnableDelayedExpansion
 title Mii_OS speed-up
 cd /d "%~dp0"
@@ -14,17 +14,21 @@ if /i "%~1"=="restore" goto :restore
 echo.
 echo  What would you like to do?
 echo.
-echo    1  Safe cleanup and speed settings   (start here)
-echo    2  Full speed-up: also turn off the stock Google TV home, so Mii_OS is the only home
-echo    3  Undo everything this script changed
-echo    4  Quit
+echo    1  Install or update Mii_OS on the box
+echo    2  Safe cleanup   (turns off apps you don't need)
+echo    3  Full speed-up: also turn off the stock Google TV home, so Mii_OS is the only home
+echo    4  Undo everything this script changed
+echo    5  Quit
 echo.
-choice /c 1234 /n /m " Press 1, 2, 3 or 4: "
-if errorlevel 4 goto :done
-if errorlevel 3 goto :restore
-set "FULL=0"
-if errorlevel 2 set "FULL=1"
+choice /c 12345 /n /m " Press 1, 2, 3, 4 or 5: "
+if errorlevel 5 goto :done
+if errorlevel 4 goto :restore
+if errorlevel 3 (set "FULL=1") else set "FULL=0"
+if errorlevel 2 goto :cleanup
+call :install_mii
+goto :done
 
+:cleanup
 echo.
 echo  Turning off apps you don't need:
 call :disable_list packages-safe.txt
@@ -32,23 +36,69 @@ call :disable_list packages-safe.txt
 if "%FULL%"=="1" call :full
 
 echo.
-echo  Speed settings:
-rem Menus and app switches in Android open twice as fast. animator_duration_scale stays at 1:
-rem it would also speed up Mii_OS's own springs, which are tuned to feel right at full length.
-adb -s %S% shell settings put global window_animation_scale 0.5
-adb -s %S% shell settings put global transition_animation_scale 0.5
-echo    OK Faster Android menu and app-switch animations
+echo  Settings:
+rem Android's own animations stay at normal speed. Half speed (an earlier version of this
+rem script) skips frames and looks choppy, which is the opposite of what we want.
+adb -s %S% shell settings put global window_animation_scale 1
+adb -s %S% shell settings put global transition_animation_scale 1
+adb -s %S% shell settings put global animator_duration_scale 1
+echo    OK Smooth animations at normal speed
 rem Apps sitting in the background are frozen instead of using the CPU. Applies after a restart.
 adb -s %S% shell settings put global cached_apps_freezer enabled
 echo    OK Freeze apps waiting in the background
+adb -s %S% shell pm trim-caches 999G >nul 2>&1
+echo    OK Cleared app caches
 call :installed com.miios.launcher
-if not errorlevel 1 (
-    echo    .. Pre-compiling Mii_OS so it opens faster ^(takes up to a minute^)
-    adb -s %S% shell cmd package compile -m speed -f com.miios.launcher >nul 2>&1
-    echo    OK Mii_OS pre-compiled
-)
+if not errorlevel 1 call :compile_mii
 call :ask_reboot
 goto :done
+
+
+:install_mii
+rem Uses mii-os.apk from this folder if there is one, otherwise the latest release from GitHub.
+set "APK=%~dp0mii-os.apk"
+if not exist "%APK%" (
+    set "APK=%TEMP%\mii-os.apk"
+    echo.
+    echo  Downloading the latest Mii_OS...
+    curl -fsSL -o "!APK!" https://github.com/ArdaYurt/mii_os/releases/latest/download/mii-os.apk
+    if errorlevel 1 (
+        echo  The download didn't work. Download mii-os.apk from the Releases page, put it in
+        echo  this folder and try again.
+        exit /b 1
+    )
+)
+echo  Installing Mii_OS on the box ^(about 30 seconds^)...
+adb -s %S% install -r "%APK%" > "%TEMP%\mii-install.txt" 2>&1
+findstr /c:"Success" "%TEMP%\mii-install.txt" >nul && goto :install_ok
+findstr /c:"INSTALL_FAILED_UPDATE_INCOMPATIBLE" "%TEMP%\mii-install.txt" >nul || goto :install_failed
+echo.
+echo  The Mii_OS already on the box was built with a different key, so it can't be updated.
+choice /c YN /n /m " Remove the old Mii_OS and install the new one? Y or N: "
+if errorlevel 2 exit /b 1
+adb -s %S% uninstall com.miios.launcher >nul 2>&1
+adb -s %S% install "%APK%" > "%TEMP%\mii-install.txt" 2>&1
+findstr /c:"Success" "%TEMP%\mii-install.txt" >nul && goto :install_ok
+:install_failed
+echo.
+echo  The install didn't work. This is what the box said:
+type "%TEMP%\mii-install.txt"
+exit /b 1
+:install_ok
+echo    OK Mii_OS installed
+call :compile_mii
+adb -s %S% shell am start -n com.miios.launcher/.MainActivity >nul 2>&1
+echo    OK Mii_OS is open on the TV
+echo.
+echo  To make the Home button open Mii_OS, use its Home setup button, or run this script
+echo  again and choose 3.
+exit /b 0
+
+:compile_mii
+echo    .. Pre-compiling Mii_OS so it opens and scrolls faster ^(up to a minute^)
+adb -s %S% shell cmd package compile -m speed -f com.miios.launcher >nul 2>&1
+echo    OK Mii_OS pre-compiled
+exit /b 0
 
 
 :full
@@ -56,7 +106,7 @@ call :installed com.miios.launcher
 if errorlevel 1 (
     echo.
     echo  Mii_OS isn't installed on this box, so the stock home stays on. Install Mii_OS first,
-    echo  then run this again and choose 2.
+    echo  then run this again and choose 3.
     exit /b
 )
 echo.

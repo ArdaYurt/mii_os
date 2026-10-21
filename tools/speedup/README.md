@@ -10,21 +10,27 @@ Dolby Vision and the DRM that streaming apps need are all left alone.
 
 ## What it does
 
-**Option 1, safe cleanup** (start here). Turns off apps nobody uses on a TV box: Send feedback,
-TalkBack, Play Games, printing, the basic screensaver, Device Health Services, YouTube TV and the old
-recommendation rows. The full list is in [`packages-safe.txt`](packages-safe.txt). It also:
+**Option 1, install or update Mii_OS.** Downloads the latest Mii_OS, installs it on the box, pre-compiles
+it so it opens and scrolls faster, and opens it on the TV. If you put a `mii-os.apk` in this folder it
+uses that file instead.
 
-- makes Android's own menu and app-switch animations twice as fast (Mii_OS's own animations keep their
-  full length, so they still feel smooth),
-- freezes apps waiting in the background so they stop using the processor,
-- pre-compiles Mii_OS so it opens faster.
+**Option 2, safe cleanup.** Turns off apps nobody uses on a TV box: Send feedback, TalkBack, Play
+Games, printing, the basic screensaver, Device Health Services, YouTube TV and the old recommendation
+rows. The full list is in [`packages-safe.txt`](packages-safe.txt). It also freezes apps waiting in the
+background so they stop using the processor, clears app caches, and pre-compiles Mii_OS if it's
+installed.
 
-**Option 2, full speed-up.** Everything in option 1, plus the stock Google TV home screen and the apps
-that feed it (Google TV films and shows, Ambient mode, YouTube Music). These are the biggest memory
-users, and afterwards Mii_OS is the box's only home screen. See
-[`packages-full.txt`](packages-full.txt). Only choose this once you're happy with Mii_OS as your home.
+Android's animation speed stays at normal. Many guides set it to half speed, but on this box that
+skips frames and looks choppy, so the script puts it back to normal if an earlier version changed it.
 
-**Option 3, undo** turns everything back on and resets the settings. `mii-restore.bat` does the same.
+**Option 3, full speed-up.** Everything in option 2, plus the stock Google TV home screen and the apps
+that feed it (Google TV films and shows, Ambient mode, YouTube Music, and the setup wizard, which can
+take the home screen back after a restart). These use the most memory, and afterwards Mii_OS is the
+box's only home screen. See [`packages-full.txt`](packages-full.txt). Only choose this once you're
+happy with Mii_OS as your home. This is the step that makes the biggest difference: options 1 and 2
+alone leave the stock Google TV home running.
+
+**Option 4, undo** turns everything back on and resets the settings. `mii-restore.bat` does the same.
 
 ## How to run it
 
@@ -38,8 +44,10 @@ You need your Windows laptop with `adb` (platform-tools), on the same Wi-Fi as t
 3. Double-click **`mii-speedup.bat`**. Type the box's IP address when it asks (on the box:
    *Settings › Network & Internet ›* your Wi-Fi). The first time, the TV asks *Allow USB debugging?*:
    tick *Always allow* and press OK.
-4. Check the name it shows is your box, press **Y**, then **1** (or **2**).
-5. Press **Y** to restart the box. Done.
+4. Check the name it shows is your box and press **Y**. If it shows the emulator instead, press **N**
+   and it asks for the IP. Then choose an option.
+5. Press **Y** to restart the box. Give it a few minutes after the restart before judging speed:
+   Android does background work right after it starts.
 
 Each line says **OK** when it worked, **-** when that app isn't on your box (fine), or **?** when the
 box refused (also fine; nothing changed).

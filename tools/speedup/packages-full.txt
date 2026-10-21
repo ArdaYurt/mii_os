@@ -7,3 +7,4 @@ com.google.android.apps.tv.launcherx        # Stock Google TV home screen
 com.google.android.videos                   # Google TV films and shows (feeds the stock home)
 com.google.android.apps.tv.dreamx           # Ambient mode photo screensaver
 com.google.android.youtube.tvmusic          # YouTube Music
+com.google.android.tungsten.setupwraith     # Setup wizard (can take the home screen back after a restart)
