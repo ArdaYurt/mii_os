@@ -11,7 +11,8 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest is moving to Ubuntu 26; 24.04 ships the Android SDK preinstalled.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -19,8 +20,6 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-
-      - uses: android-actions/setup-android@v3
 
       - uses: gradle/actions/setup-gradle@v4
 
@@ -47,7 +46,8 @@ jobs:
       - name: Report build errors
         if: failure()
         run: |
-          grep -E "^e: |^\* What went wrong|^> |error:" -A2 build.log | head -60 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}' | sed 's/^/::error title=Build errors::/'
+          [ -f build.log ] || exit 0
+          { grep -E "^e: |^\* What went wrong|^> |error:" -A2 build.log || tail -40 build.log; } | head -60 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}' | sed 's/^/::error title=Build errors::/'
           echo
 
       - uses: actions/upload-artifact@v4
