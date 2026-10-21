@@ -1,5 +1,6 @@
 package com.miios.launcher.ui
 
+import android.os.Build
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -47,7 +48,9 @@ fun GlassSurface(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val colors = LocalMiiColors.current
-    val backdrop = LocalBackdrop.current
+    // Blur needs Android 12. Older boxes skip the backdrop copy entirely and use a denser frosted tint.
+    val backdrop = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) LocalBackdrop.current else null
+    val tint = if (backdrop != null) colors.glass else colors.glass.copy(alpha = 0.94f)
     var origin by remember { mutableStateOf(Offset.Zero) }
 
     Box(
@@ -71,7 +74,7 @@ fun GlassSurface(
         Box(
             Modifier
                 .matchParentSize()
-                .background(colors.glass)
+                .background(tint)
                 .drawWithContent {
                     drawContent()
                     // inner shade toward the bottom edge gives the sheet thickness

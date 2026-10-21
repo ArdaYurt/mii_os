@@ -10,9 +10,9 @@ android {
 
     defaultConfig {
         applicationId = "com.miios.launcher"
-        // Mi Box S 2nd gen ships Google TV on Android 12 (API 31), which is also
-        // the first version with RenderEffect blur for the glass panels.
-        minSdk = 31
+        // Mi Box S 2nd gen runs Android 11 (API 30). Glass blur needs Android 12 (API 31),
+        // so on older boxes the glass panels fall back to a frosted tint (see Glass.kt).
+        minSdk = 30
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
