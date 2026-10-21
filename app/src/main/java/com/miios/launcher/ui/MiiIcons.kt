@@ -16,7 +16,7 @@ import kotlin.math.sin
  * The Mii_OS icon set. Every icon is drawn on a 24-unit grid with one rounded stroke weight,
  * so they read as a family at any size, from a dock button to a 4K channel screen.
  */
-enum class MiiIcon { Gear, Home, Wifi, Display, Apps, Remote, Clock, Sliders, Download, Play, PlayCircle, Screens, Antenna, Chevron, Back }
+enum class MiiIcon { Gear, Home, Wifi, Display, Apps, Remote, Clock, Sliders, Download, Play, PlayCircle, Screens, Antenna, Chevron, Back, Film }
 
 fun DrawScope.drawMiiIcon(icon: MiiIcon, color: Color, weight: Float = 2f) {
     val k = size.minDimension / 24f
@@ -115,5 +115,13 @@ fun DrawScope.drawMiiIcon(icon: MiiIcon, color: Color, weight: Float = 2f) {
         }
         MiiIcon.Chevron -> path { m(8f, 3.5f); l(16f, 12f); l(8f, 20.5f) }
         MiiIcon.Back -> path { m(14.5f, 5f); l(7.5f, 12f); l(14.5f, 19f) }
+        MiiIcon.Film -> {
+            rrect(3f, 3f, 18f, 18f, 3f)
+            line(7.5f, 3f, 7.5f, 21f)
+            line(16.5f, 3f, 16.5f, 21f)
+            line(3f, 12f, 7.5f, 12f)
+            line(16.5f, 12f, 21f, 12f)
+            path(fill = true) { m(10.4f, 9.4f); l(14.2f, 12f); l(10.4f, 14.6f); close() }
+        }
     }
 }
