@@ -47,7 +47,7 @@ jobs:
         if: failure()
         run: |
           [ -f build.log ] || exit 0
-          { grep -E "^e: |^\* What went wrong|^> |error:" -A2 build.log || tail -40 build.log; } | head -60 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}' | sed 's/^/::error title=Build errors::/'
+          { grep -E "^e: |^\* What went wrong|error:" -A3 build.log || tail -40 build.log; } | head -60 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}' | sed 's/^/::error title=Build errors::/'
           echo
 
       - uses: actions/upload-artifact@v4

@@ -206,6 +206,7 @@ fun LauncherScreen(
         val density = LocalDensity.current
         val screen = with(density) { IntSize(maxWidth.roundToPx(), maxHeight.roundToPx()) }
         val scene: @Composable () -> Unit = { Scenery(colors) }
+        val pageWidthPx = with(density) { (maxWidth - unit * 11f).toPx() }
 
         CompositionLocalProvider(
             LocalMiiColors provides colors,
@@ -221,7 +222,6 @@ fun LauncherScreen(
                     .fillMaxWidth()
                     .height(unit * 37f),
             ) {
-                val pageWidthPx = with(density) { (maxWidth - unit * 11f).toPx() }
                 for (p in 0 until pageCount) {
                     if (kotlin.math.abs(p - page) > 1) continue
                     ChannelPage(
