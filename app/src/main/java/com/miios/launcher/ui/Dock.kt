@@ -41,7 +41,7 @@ import java.util.Locale
 val DockShape = GenericShape { size, _ ->
     val rise = size.height * 0.24f
     moveTo(0f, rise)
-    quadraticTo(size.width / 2f, -rise, size.width, rise)
+    quadraticBezierTo(size.width / 2f, -rise, size.width, rise)
     lineTo(size.width, size.height)
     lineTo(0f, size.height)
     close()

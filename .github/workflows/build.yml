@@ -20,6 +20,8 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - uses: android-actions/setup-android@v3
+
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Restore signing key
@@ -37,8 +39,16 @@ jobs:
           MII_KEY_PASSWORD: ${{ secrets.MII_KEY_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon assembleRelease
+          set -o pipefail
+          ./gradlew --no-daemon assembleRelease 2>&1 | tee build.log
           cp app/build/outputs/apk/release/app-release.apk mii-os.apk
+
+      # Surface compiler and Gradle errors as annotations so they show on the PR's checks.
+      - name: Report build errors
+        if: failure()
+        run: |
+          grep -E "^e: |^\* What went wrong|^> |error:" -A2 build.log | head -60 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}' | sed 's/^/::error title=Build errors::/'
+          echo
 
       - uses: actions/upload-artifact@v4
         with:
