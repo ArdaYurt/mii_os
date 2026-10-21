@@ -26,7 +26,7 @@ skips frames and looks choppy, so the script puts it back to normal if an earlie
 **Option 3, full speed-up.** Everything in option 2, plus the stock Google TV home screen and the apps
 that feed it (Google TV films and shows, YouTube Music, and the setup wizard, which can
 take the home screen back after a restart). These use the most memory, and afterwards Mii_OS is the
-box's only home screen. See [`packages-full.txt`](packages-full.txt). Only choose this once you're
+box's only home screen, and Mii_OS's Home button service is turned on. See [`packages-full.txt`](packages-full.txt). Only choose this once you're
 happy with Mii_OS as your home. This is the step that makes the biggest difference: options 1 and 2
 alone leave the stock Google TV home running.
 

@@ -121,6 +121,24 @@ echo  Turning off the stock Google TV home and its helpers:
 call :disable_list packages-full.txt
 adb -s %S% shell cmd package set-home-activity com.miios.launcher/.MainActivity >nul 2>&1
 echo    OK Mii_OS is now the home screen
+call :home_service
+exit /b
+
+:home_service
+rem Turn on Mii_OS's Home button service (Home opens Mii_OS and its HOME Menu), keeping any other
+rem accessibility services already on. Undo leaves it on: it's part of Mii_OS's normal setup.
+set "HB=com.miios.launcher/com.miios.launcher.service.HomeButtonService"
+set "A11Y="
+for /f "delims=" %%v in ('adb -s %S% shell settings get secure enabled_accessibility_services') do set "A11Y=%%v"
+if "%A11Y%"=="null" set "A11Y="
+if not defined A11Y (
+    set "A11Y=%HB%"
+) else (
+    if "!A11Y:HomeButtonService=!"=="!A11Y!" set "A11Y=!A11Y!:%HB%"
+)
+adb -s %S% shell settings put secure enabled_accessibility_services "%A11Y%"
+adb -s %S% shell settings put secure accessibility_enabled 1
+echo    OK Home button service on
 exit /b
 
 
