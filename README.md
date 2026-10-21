@@ -51,7 +51,7 @@ To update later, repeat step 3 with the same address.
 
 ### Favourite channels
 
-Apple TV, YouTube, Plex, Prime Video and Screen Share (AirScreen) always have the first five channels,
+Apple TV, YouTube, Plex, Prime Video, Stremio and Screen Share (AirScreen) always have the first channels,
 with Mii_OS's own art. If one isn't installed yet its channel is greyed out with an **Install** tag;
 open it and press **Install** to go to its Play Store page.
 

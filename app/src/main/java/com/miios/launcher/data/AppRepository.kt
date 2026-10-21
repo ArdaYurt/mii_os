@@ -70,6 +70,7 @@ object AppRepository {
         ChannelStyles.YOUTUBE,
         ChannelStyles.PLEX,
         ChannelStyles.PRIME_VIDEO,
+        ChannelStyles.STREMIO,
         ChannelStyles.AIRSCREEN,
         ChannelStyles.TV,
     )
