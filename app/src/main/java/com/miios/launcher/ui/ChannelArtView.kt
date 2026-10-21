@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,7 +34,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.miios.launcher.art.ChannelArt
 import com.miios.launcher.art.ChannelStyle
-import com.miios.launcher.art.Glyph
 
 /** Draws a channel's art at whatever size it's given; used by the tiles and the channel screen. */
 @Composable
@@ -71,15 +71,25 @@ private fun StyledArt(style: ChannelStyle, u: androidx.compose.ui.unit.Dp) {
                 size = Size(size.width * 1.5f, size.height * 1.1f),
             )
         }
-        Row(
-            Modifier.align(Alignment.Center).fillMaxWidth().padding(horizontal = u * 6f),
-            horizontalArrangement = Arrangement.spacedBy(u * 3.5f, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (style.glyph != Glyph.None) {
-                Canvas(Modifier.size(u * 15f)) { drawGlyph(style.glyph, style.ink) }
+        // Wii-style channel emblem: the icon above the name, centred
+        Column(Modifier.align(Alignment.Center).fillMaxWidth().padding(horizontal = u * 6f), horizontalAlignment = Alignment.CenterHorizontally) {
+            Canvas(Modifier.size(u * 20f)) {
+                drawMiiIcon(style.icon, style.ink, weight = 2.2f)
+                if (style.icon == MiiIcon.Play) {
+                    // the play mark is a solid rounded block with the triangle cut in the channel colour
+                    val k = size.minDimension / 24f
+                    val ox = (size.width - 24f * k) / 2f
+                    val oy = (size.height - 24f * k) / 2f
+                    val tri = Path().apply {
+                        moveTo(ox + 9.6f * k, oy + 8.4f * k)
+                        lineTo(ox + 16f * k, oy + 12f * k)
+                        lineTo(ox + 9.6f * k, oy + 15.6f * k)
+                        close()
+                    }
+                    drawPath(tri, style.bottom)
+                }
             }
-            ArtText(style.name, u * 11f, style.ink, Modifier, weight = FontWeight.ExtraBold)
+            ArtText(style.name, u * 9.5f, style.ink, Modifier.padding(top = u * 2f), weight = FontWeight.ExtraBold)
         }
     }
 }
@@ -94,30 +104,6 @@ private fun ArtText(text: String, size: androidx.compose.ui.unit.Dp, color: Colo
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
     )
-}
-
-private fun DrawScope.drawGlyph(glyph: Glyph, ink: Color) {
-    val s = size.minDimension
-    when (glyph) {
-        Glyph.Play -> {
-            drawRoundRect(ink, topLeft = Offset(0f, s * 0.15f), size = Size(s, s * 0.7f), cornerRadius = CornerRadius(s * 0.2f))
-            val tri = Path().apply {
-                moveTo(s * 0.4f, s * 0.33f)
-                lineTo(s * 0.68f, s * 0.5f)
-                lineTo(s * 0.4f, s * 0.67f)
-                close()
-            }
-            drawPath(tri, Color(0xFFD40000))
-        }
-        Glyph.Screens -> {
-            val w = s * 0.08f
-            // a tablet beaming to a TV
-            drawRoundRect(ink, topLeft = Offset(s * 0.02f, s * 0.38f), size = Size(s * 0.3f, s * 0.46f), cornerRadius = CornerRadius(s * 0.06f), style = Stroke(w))
-            drawRoundRect(ink, topLeft = Offset(s * 0.42f, s * 0.16f), size = Size(s * 0.56f, s * 0.42f), cornerRadius = CornerRadius(s * 0.06f), style = Stroke(w))
-            drawLine(ink, Offset(s * 0.56f, s * 0.74f), Offset(s * 0.84f, s * 0.74f), w)
-        }
-        Glyph.None -> Unit
-    }
 }
 
 private val greyscale = androidx.compose.ui.graphics.Paint().apply {
@@ -146,14 +132,7 @@ fun InstallTag(modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(unit * 0.35f),
     ) {
-        Canvas(Modifier.size(unit * 0.9f)) {
-            val s = size.minDimension
-            val w = s * 0.16f
-            drawLine(Color.White, Offset(s / 2, s * 0.05f), Offset(s / 2, s * 0.65f), w)
-            drawLine(Color.White, Offset(s * 0.22f, s * 0.4f), Offset(s / 2, s * 0.68f), w)
-            drawLine(Color.White, Offset(s * 0.78f, s * 0.4f), Offset(s / 2, s * 0.68f), w)
-            drawLine(Color.White, Offset(s * 0.1f, s * 0.95f), Offset(s * 0.9f, s * 0.95f), w)
-        }
+        Canvas(Modifier.size(unit * 1f)) { drawMiiIcon(MiiIcon.Download, Color.White, weight = 2.6f) }
         ArtText("Install", unit * 0.85f, Color.White, Modifier)
     }
 }

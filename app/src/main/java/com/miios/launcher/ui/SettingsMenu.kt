@@ -11,7 +11,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,13 +24,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 
 /** Entries on the Mii_OS Settings screen. Each opens the matching page of the box's own settings. */
-enum class SettingsItem(val title: String, val detail: String) {
-    Network("Internet", "Wi-Fi and Ethernet"),
-    Display("Display & Sound", "Resolution, HDR, audio output"),
-    Apps("Apps", "Storage, updates, uninstall"),
-    HomeButton("Home Button", "Make Home open Mii_OS"),
-    DateTime("Date & Time", "Clock and time zone"),
-    System("All Settings", "Everything else on the box"),
+enum class SettingsItem(val title: String, val detail: String, val icon: MiiIcon) {
+    Network("Internet", "Wi-Fi and Ethernet", MiiIcon.Wifi),
+    Display("Display & Sound", "Resolution, HDR, audio output", MiiIcon.Display),
+    Apps("Apps", "Storage, updates, uninstall", MiiIcon.Apps),
+    HomeButton("Home Button", "Make Home open Mii_OS", MiiIcon.Remote),
+    DateTime("Date & Time", "Clock and time zone", MiiIcon.Clock),
+    System("All Settings", "Everything else on the box", MiiIcon.Sliders),
 }
 
 const val SETTINGS_COLS = 2
@@ -54,7 +57,10 @@ fun SettingsMenu(focused: Int, homeCaptureOn: Boolean, progress: () -> Float) {
             Modifier.fillMaxSize().padding(horizontal = unit * 12f, vertical = unit * 5f),
             verticalArrangement = Arrangement.spacedBy(unit * 2f),
         ) {
-            Label("Mii_OS Settings", unit * 3.2f, colors.ink, FontWeight.ExtraBold)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(unit * 1.2f)) {
+                Canvas(Modifier.size(unit * 3.4f)) { drawMiiIcon(MiiIcon.Gear, colors.focus, weight = 2.2f) }
+                Label("Mii_OS Settings", unit * 3.2f, colors.ink, FontWeight.ExtraBold)
+            }
             Box(Modifier.fillMaxWidth().height(unit * 0.2f).graphicsLayer { alpha = 0.9f }) {
                 Canvas(Modifier.fillMaxSize()) { drawRect(colors.focus) }
             }
@@ -66,7 +72,7 @@ fun SettingsMenu(focused: Int, homeCaptureOn: Boolean, progress: () -> Float) {
                         val detail = if (item == SettingsItem.HomeButton) {
                             if (homeCaptureOn) "On: Home opens Mii_OS" else "Off: press to turn on"
                         } else item.detail
-                        SettingsButton(item.title, detail, i == focused, Modifier.weight(1f).fillMaxHeight())
+                        SettingsButton(item.icon, item.title, detail, i == focused, Modifier.weight(1f).fillMaxHeight())
                     }
                 }
             }
@@ -76,7 +82,7 @@ fun SettingsMenu(focused: Int, homeCaptureOn: Boolean, progress: () -> Float) {
 }
 
 @Composable
-private fun SettingsButton(title: String, detail: String, focused: Boolean, modifier: Modifier) {
+private fun SettingsButton(icon: MiiIcon, title: String, detail: String, focused: Boolean, modifier: Modifier) {
     val unit = LocalUnit.current
     val colors = LocalMiiColors.current
     val scale = animateFloatAsState(if (focused) 1.05f else 1f, Motion.focusScale, label = "settingsScale")
@@ -84,9 +90,19 @@ private fun SettingsButton(title: String, detail: String, focused: Boolean, modi
     val radius = unit * 2.4f
     Box(modifier.graphicsLayer { scaleX = scale.value; scaleY = scale.value }) {
         GlassSurface(RoundedCornerShape(radius), Modifier.fillMaxSize()) {
-            Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-                Label(title, unit * 2.2f, colors.ink, FontWeight.Bold)
-                Label(detail, unit * 1.15f, colors.inkSoft, FontWeight.Medium, Modifier.padding(top = unit * 0.5f))
+            Row(
+                Modifier.align(Alignment.CenterStart).padding(start = unit * 2.4f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(unit * 1.8f),
+            ) {
+                // icon in a soft Wii-blue disc
+                Box(Modifier.size(unit * 6f).background(colors.focus.copy(alpha = 0.12f), CircleShape), contentAlignment = Alignment.Center) {
+                    Canvas(Modifier.size(unit * 3.4f)) { drawMiiIcon(icon, colors.focus, weight = 2.2f) }
+                }
+                Column {
+                    Label(title, unit * 2.2f, colors.ink, FontWeight.Bold)
+                    Label(detail, unit * 1.15f, colors.inkSoft, FontWeight.Medium, Modifier.padding(top = unit * 0.4f))
+                }
             }
         }
         Canvas(Modifier.fillMaxSize()) {
