@@ -57,15 +57,16 @@ fun Dock(
     modifier: Modifier = Modifier,
 ) {
     val unit = LocalUnit.current
+    val iconInk = LocalMiiColors.current.inkSoft
     GlassSurface(DockShape, modifier) {
         Row(
             Modifier.fillMaxSize().padding(start = unit * 7f, end = unit * 7f, top = unit * 1.6f),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            RoundButton("Settings", focused == DockButton.Settings, badge = false) { drawGear() }
+            RoundButton("Settings", focused == DockButton.Settings, badge = false) { drawMiiIcon(MiiIcon.Gear, iconInk) }
             Clock(now)
-            RoundButton("Home setup", focused == DockButton.Setup, badge = setupNeedsAttention) { drawHouse() }
+            RoundButton("Home setup", focused == DockButton.Setup, badge = setupNeedsAttention) { drawMiiIcon(MiiIcon.Home, iconInk) }
         }
     }
 }
@@ -140,31 +141,4 @@ fun Label(text: String, size: Dp, color: Color, weight: FontWeight, modifier: Mo
         style = TextStyle(color = color, fontSize = fontSize, fontWeight = weight, textAlign = TextAlign.Center),
         maxLines = 1,
     )
-}
-
-private fun DrawScope.drawGear() {
-    val c = center
-    val r = size.minDimension / 2f
-    val ink = Color(0xFF7D8A98)
-    val w = r * 0.18f
-    drawCircle(ink, radius = r * 0.3f, center = c, style = Stroke(w))
-    for (i in 0 until 8) {
-        val a = Math.toRadians(i * 45.0)
-        val dx = kotlin.math.cos(a).toFloat()
-        val dy = kotlin.math.sin(a).toFloat()
-        drawLine(ink, Offset(c.x + dx * r * 0.55f, c.y + dy * r * 0.55f), Offset(c.x + dx * r * 0.92f, c.y + dy * r * 0.92f), w, StrokeCap.Round)
-    }
-}
-
-private fun DrawScope.drawHouse() {
-    val r = size.minDimension
-    val ink = Color(0xFF7D8A98)
-    val w = r * 0.09f
-    val left = r * 0.18f
-    val right = r * 0.82f
-    drawLine(ink, Offset(r * 0.08f, r * 0.5f), Offset(r * 0.5f, r * 0.12f), w, StrokeCap.Round)
-    drawLine(ink, Offset(r * 0.5f, r * 0.12f), Offset(r * 0.92f, r * 0.5f), w, StrokeCap.Round)
-    drawLine(ink, Offset(left, r * 0.42f), Offset(left, r * 0.9f), w, StrokeCap.Round)
-    drawLine(ink, Offset(right, r * 0.42f), Offset(right, r * 0.9f), w, StrokeCap.Round)
-    drawLine(ink, Offset(left, r * 0.9f), Offset(right, r * 0.9f), w, StrokeCap.Round)
 }

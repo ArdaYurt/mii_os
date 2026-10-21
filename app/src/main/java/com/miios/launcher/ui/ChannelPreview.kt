@@ -106,8 +106,8 @@ fun ChannelPreview(
                     horizontalArrangement = Arrangement.spacedBy(unit * 4f, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    PillButton(if (app.installed) "Menu" else "Details", focused == PreviewButton.Menu)
-                    PillButton(if (app.installed) "Start" else "Install", focused == PreviewButton.Start)
+                    PillButton(if (app.installed) "Menu" else "Details", MiiIcon.Sliders, focused == PreviewButton.Menu)
+                    PillButton(if (app.installed) "Start" else "Install", if (app.installed) MiiIcon.PlayCircle else MiiIcon.Download, focused == PreviewButton.Start)
                 }
             }
         }
@@ -119,7 +119,7 @@ fun ChannelPreview(
 private fun lerp(a: Float, b: Float, t: Float) = a + (b - a) * t
 
 @Composable
-private fun PillButton(text: String, focused: Boolean) {
+private fun PillButton(text: String, icon: MiiIcon, focused: Boolean) {
     val unit = LocalUnit.current
     val colors = LocalMiiColors.current
     val scale = animateFloatAsState(if (focused) 1.08f else 1f, Motion.focusScale, label = "pill")
@@ -131,7 +131,10 @@ private fun PillButton(text: String, focused: Boolean) {
             .graphicsLayer { scaleX = scale.value; scaleY = scale.value },
     ) {
         GlassSurface(shape, Modifier.fillMaxSize()) {
-            Label(text, unit * 1.8f, colors.ink, FontWeight.Bold, Modifier.align(Alignment.Center))
+            Row(Modifier.align(Alignment.Center), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(unit * 0.9f)) {
+                Canvas(Modifier.size(unit * 2.2f)) { drawMiiIcon(icon, colors.focus, weight = 2.4f) }
+                Label(text, unit * 1.8f, colors.ink, FontWeight.Bold)
+            }
         }
         Canvas(Modifier.fillMaxSize()) {
             drawRoundRect(
