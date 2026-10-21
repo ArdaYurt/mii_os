@@ -7,6 +7,26 @@ Mii_OS is a launcher app, not a replacement operating system. It changes the hom
 Apple TV, Plex, YouTube, Netflix and every other app keep their 4K, HDR and Dolby Vision playback
 exactly as before. Uninstalling it puts the box back the way it was.
 
+## Try it on your laptop first
+
+You can check the design on a Windows, Mac or Linux laptop with Android Studio's free TV emulator,
+then install the same file on the Mi Box.
+
+1. Install [Android Studio](https://developer.android.com/studio) and open it.
+2. On the welcome screen choose *More Actions › Virtual Device Manager*, then the **+** button.
+3. Pick the **TV** category and the **Television (1080p)** device. (**Television (4K)** also works
+   but runs slowly on most laptops; the Mi Box draws its home screen at 1080p anyway.)
+4. For the system image choose a **Google TV** image with API level **31 or higher** and let it
+   download. Finish, then press ▶ to start the emulator.
+5. Download [`mii-os.apk`](https://github.com/ArdaYurt/mii_os/releases/latest/download/mii-os.apk)
+   on the laptop and drag the file onto the emulator window. It installs in a few seconds.
+6. Open Mii_OS from the emulator's apps row. Use the keyboard as the remote: arrow keys to move,
+   **Enter** for OK, **Esc** for Back.
+
+The emulator shows the layout, colours and motion, but it runs on your laptop's hardware, so judge
+speed on the Mi Box itself. Your own apps (Plex, Apple TV and so on) won't be in the emulator unless
+you install them there, so most channels will show as empty slots.
+
 ## Install it on your Mi Box
 
 You only need the TV remote. It takes about five minutes the first time.
