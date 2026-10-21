@@ -33,6 +33,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
@@ -49,17 +50,17 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
 interface LauncherActions {
+    /** Starts the app, or opens its Play Store page if it isn't installed yet. */
     fun launch(app: InstalledApp)
     fun openAppInfo(app: InstalledApp)
-    fun openSettings()
-    fun openHomeSetup()
+    fun openSystemSetting(item: SettingsItem)
 }
 
 private const val COLS = 4
 private const val ROWS = 3
 private const val PER_PAGE = COLS * ROWS
 
-private enum class Zone { Grid, Dock, Preview }
+private enum class Zone { Grid, Dock, Preview, Settings }
 
 /**
  * The home screen. Focus is driven by one key handler rather than Compose's focus search,
@@ -80,12 +81,13 @@ fun LauncherScreen(
             delay(1000L * (60 - now.second).coerceAtLeast(1))
         }
     }
-    val colors = if (now.hour in 7..18) DayColors else NightColors
+    val colors = WiiColors
 
     var zone by remember { mutableStateOf(Zone.Grid) }
     var index by remember { mutableIntStateOf(0) }
     var dock by remember { mutableStateOf(DockButton.Settings) }
     var previewButton by remember { mutableStateOf(PreviewButton.Start) }
+    var settingsIndex by remember { mutableIntStateOf(0) }
     var leanX by remember { mutableIntStateOf(0) }
     var leanY by remember { mutableIntStateOf(0) }
     var moveId by remember { mutableIntStateOf(0) }
@@ -100,9 +102,17 @@ fun LauncherScreen(
     LaunchedEffect(page) { pageAnim.animateTo(page.toFloat(), Motion.page) }
     val previewAnim = remember { Animatable(0f) }
     val previewVisible by remember { derivedStateOf { previewAnim.value > 0f } }
+    val launchAnim = remember { Animatable(0f) }
+    val settingsAnim = remember { Animatable(0f) }
+    val settingsVisible by remember { derivedStateOf { settingsAnim.value > 0f } }
+    // Where the focused tile sits on screen, so the channel screen can grow out of it.
+    // A plain holder, not state: it changes every frame while a tile animates.
+    val focusedBounds = remember { arrayOf(Rect.Zero) }
+    var previewOrigin by remember { mutableStateOf(Rect.Zero) }
 
     fun openPreview() {
         if (apps.getOrNull(index) == null) return
+        previewOrigin = focusedBounds[0]
         zone = Zone.Preview
         previewButton = PreviewButton.Start
         scope.launch { previewAnim.animateTo(1f, Motion.preview) }
@@ -111,18 +121,44 @@ fun LauncherScreen(
         zone = Zone.Grid
         scope.launch { previewAnim.animateTo(0f, Motion.preview) }
     }
+    fun openSettings() {
+        zone = Zone.Settings
+        settingsIndex = 0
+        scope.launch { settingsAnim.animateTo(1f, Motion.preview) }
+    }
+    fun closeSettings() {
+        zone = Zone.Dock
+        scope.launch { settingsAnim.animateTo(0f, Motion.preview) }
+    }
+    fun startApp(app: InstalledApp) {
+        scope.launch {
+            // Wii-style start: push in slightly and wash to white, then hand over to the app
+            launchAnim.animateTo(1f, androidx.compose.animation.core.tween(260, easing = Motion.emphasized))
+            actions.launch(app)
+            delay(700)
+            launchAnim.snapTo(0f)
+            previewAnim.snapTo(0f)
+            zone = Zone.Grid
+        }
+    }
 
     LaunchedEffect(homePresses) {
         if (homePresses > 0) {
+            launchAnim.snapTo(0f)
             previewAnim.snapTo(0f)
+            settingsAnim.snapTo(0f)
             zone = Zone.Grid
             index = 0
         }
     }
 
     BackHandler {
-        // A home screen never exits. Back closes the preview or returns focus to the grid.
-        if (zone == Zone.Preview) closePreview() else zone = Zone.Grid
+        // A home screen never exits. Back closes whatever is open, or returns focus to the grid.
+        when (zone) {
+            Zone.Preview -> closePreview()
+            Zone.Settings -> closeSettings()
+            else -> zone = Zone.Grid
+        }
     }
 
     fun move(dx: Int, dy: Int) {
@@ -130,6 +166,11 @@ fun LauncherScreen(
         leanY = dy
         moveId++
         when (zone) {
+            Zone.Settings -> {
+                val count = SettingsItem.entries.size
+                val next = settingsIndex + dx + dy * SETTINGS_COLS
+                if (next in 0 until count && (dx == 0 || next / SETTINGS_COLS == settingsIndex / SETTINGS_COLS)) settingsIndex = next
+            }
             Zone.Preview -> if (dx != 0) {
                 previewButton = if (dx < 0) PreviewButton.Menu else PreviewButton.Start
             }
@@ -167,11 +208,16 @@ fun LauncherScreen(
     fun select() {
         when (zone) {
             Zone.Grid -> openPreview()
-            Zone.Dock -> if (dock == DockButton.Settings) actions.openSettings() else actions.openHomeSetup()
+            Zone.Dock -> if (dock == DockButton.Settings) openSettings() else actions.openSystemSetting(SettingsItem.HomeButton)
+            Zone.Settings -> actions.openSystemSetting(SettingsItem.entries[settingsIndex])
             Zone.Preview -> {
+                if (launchAnim.isRunning) return
                 val app = apps.getOrNull(index) ?: return
-                if (previewButton == PreviewButton.Start) actions.launch(app) else actions.openAppInfo(app)
-                closePreview()
+                when {
+                    previewButton == PreviewButton.Menu -> { actions.openAppInfo(app); closePreview() }
+                    app.installed -> startApp(app)
+                    else -> { actions.launch(app); closePreview() }
+                }
             }
         }
     }
@@ -231,6 +277,7 @@ fun LauncherScreen(
                         leanX = leanX,
                         leanY = leanY,
                         moveId = moveId,
+                        onFocusedBounds = { focusedBounds[0] = it },
                         modifier = Modifier
                             .fillMaxSize()
                             .graphicsLayer { translationX = (p - pageAnim.value) * pageWidthPx },
@@ -253,7 +300,11 @@ fun LauncherScreen(
 
             val previewApp = apps.getOrNull(index)
             if (previewApp != null && (zone == Zone.Preview || previewVisible)) {
-                ChannelPreview(previewApp, previewButton, { previewAnim.value }, screen)
+                ChannelPreview(previewApp, previewButton, { previewAnim.value }, { launchAnim.value }, previewOrigin, screen)
+            }
+
+            if (zone == Zone.Settings || settingsVisible) {
+                SettingsMenu(settingsIndex, homeCaptureOn) { settingsAnim.value }
             }
         }
     }
@@ -267,6 +318,7 @@ private fun ChannelPage(
     leanX: Int,
     leanY: Int,
     moveId: Int,
+    onFocusedBounds: (Rect) -> Unit,
     modifier: Modifier,
 ) {
     val unit = LocalUnit.current
@@ -281,6 +333,7 @@ private fun ChannelPage(
                         leanX = leanX,
                         leanY = leanY,
                         moveId = moveId,
+                        onFocusedBounds = onFocusedBounds,
                         modifier = Modifier.weight(1f).fillMaxHeight(),
                     )
                 }

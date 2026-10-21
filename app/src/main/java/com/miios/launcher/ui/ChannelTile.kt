@@ -3,14 +3,12 @@ package com.miios.launcher.ui
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,18 +22,16 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.zIndex
 import com.miios.launcher.art.ChannelArt
@@ -59,6 +55,7 @@ fun ChannelTile(
     leanY: Int,
     moveId: Int,
     modifier: Modifier = Modifier,
+    onFocusedBounds: (Rect) -> Unit = {},
 ) {
     val colors = LocalMiiColors.current
     val unit = LocalUnit.current
@@ -93,6 +90,7 @@ fun ChannelTile(
 
     Box(
         modifier
+            .onGloballyPositioned { if (focused) onFocusedBounds(Rect(it.positionInRoot(), it.size.toSize())) }
             .zIndex(if (focused) 1f else 0f)
             .graphicsLayer {
                 scaleX = scale.value
@@ -121,6 +119,7 @@ fun ChannelTile(
                     drawOutline(outline, colors.focus.copy(alpha = glow.value), style = Stroke(unit.toPx() * 0.32f))
                 } else {
                     drawContent()
+                    drawOutline(outer.createOutline(size, layoutDirection, this), colors.tileBorder, style = Stroke(unit.toPx() * 0.12f))
                 }
             }
             .clip(outer)
@@ -130,7 +129,8 @@ fun ChannelTile(
             EmptySlot(Modifier.fillMaxSize())
         } else {
             Box(Modifier.fillMaxSize().padding(unit * 0.3f).clip(inner)) {
-                ChannelArtView(app, Modifier.fillMaxSize())
+                LoadedArt(app, Modifier.fillMaxSize().notInstalled(!app.installed))
+                if (!app.installed) InstallTag(Modifier.align(Alignment.BottomEnd).padding(unit * 0.6f))
                 // sheen: a soft highlight that moves opposite to the tilt
                 Canvas(Modifier.fillMaxSize()) {
                     if (glow.value > 0f) {
@@ -150,9 +150,8 @@ fun ChannelTile(
 }
 
 @Composable
-private fun ChannelArtView(app: InstalledApp, modifier: Modifier) {
+private fun LoadedArt(app: InstalledApp, modifier: Modifier) {
     val context = LocalContext.current
-    val colors = LocalMiiColors.current
     var size by remember { mutableStateOf(IntSize.Zero) }
     var art by remember(app.packageName) { mutableStateOf<ChannelArt?>(null) }
     LaunchedEffect(app.packageName, size) {
@@ -161,35 +160,7 @@ private fun ChannelArtView(app: InstalledApp, modifier: Modifier) {
                 ?: ChannelArtLoader.load(context, app, size.width, size.height)
         }
     }
-    Box(modifier.onSizeChanged { size = it }, contentAlignment = Alignment.Center) {
-        when (val a = art) {
-            is ChannelArt.FullBleed -> Image(
-                bitmap = a.image,
-                contentDescription = app.label,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
-            )
-            is ChannelArt.IconOnColor -> {
-                Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(a.background.copy(alpha = 0.85f), a.background))))
-                Image(bitmap = a.icon, contentDescription = null, modifier = Modifier.align(Alignment.Center).padding(bottom = LocalUnit.current * 1.2f))
-                ChannelLabel(app.label, Modifier.align(Alignment.BottomCenter))
-            }
-            null -> Box(Modifier.fillMaxSize().background(colors.tileEmpty))
-        }
-    }
-}
-
-@Composable
-private fun ChannelLabel(text: String, modifier: Modifier) {
-    val unit = LocalUnit.current
-    val fontSize = with(LocalDensity.current) { (unit * 1.05f).toSp() }
-    BasicText(
-        text = text,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        style = TextStyle(color = Color.White, fontSize = fontSize, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center),
-        modifier = modifier.fillMaxWidth().padding(horizontal = unit * 0.8f, vertical = unit * 0.7f),
-    )
+    ChannelArtView(art, app.label, modifier.onSizeChanged { size = it })
 }
 
 @Composable

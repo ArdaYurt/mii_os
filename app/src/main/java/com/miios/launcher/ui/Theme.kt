@@ -9,52 +9,35 @@ import androidx.compose.ui.unit.Dp
 data class MiiColors(
     val bg1: Color,
     val bg2: Color,
+    val lines: Color,
     val ink: Color,
     val inkSoft: Color,
     val glass: Color,
     val glassEdge: Color,
     val glassShade: Color,
     val tileFrame: Color,
+    val tileBorder: Color,
     val tileEmpty: Color,
     val focus: Color,
-    val blob1: Color,
-    val blob2: Color,
-    val blob3: Color,
 )
 
-val DayColors = MiiColors(
-    bg1 = Color(0xFFF7FAFC),
-    bg2 = Color(0xFFE3EDF5),
-    ink = Color(0xFF3A4552),
-    inkSoft = Color(0xFF7D8A98),
-    glass = Color(0x6BFFFFFF),
-    glassEdge = Color(0xD9FFFFFF),
-    glassShade = Color(0x2E7896B4),
-    tileFrame = Color(0xE6FFFFFF),
-    tileEmpty = Color(0x8CCDD6E0),
-    focus = Color(0xFF2AA7E6),
-    blob1 = Color(0xFF8FD3FF),
-    blob2 = Color(0xFFFFD4A8),
-    blob3 = Color(0xFFC8B8FF),
+/** The Wii Menu's palette: white and soft grey, with the Wii's sky blue for focus and accents. */
+val WiiColors = MiiColors(
+    bg1 = Color(0xFFFFFFFF),
+    bg2 = Color(0xFFEDEFF1),
+    lines = Color(0x0F8C96A0),
+    ink = Color(0xFF55595E),
+    inkSoft = Color(0xFF9A9EA3),
+    glass = Color(0xC7F4F5F6),
+    glassEdge = Color(0xFFFFFFFF),
+    glassShade = Color(0x1A6E7884),
+    tileFrame = Color(0xFFFFFFFF),
+    tileBorder = Color(0xFFCDD1D5),
+    tileEmpty = Color(0xFFE6E8EB),
+    focus = Color(0xFF34BEED),
 )
 
-val NightColors = MiiColors(
-    bg1 = Color(0xFF0D1724),
-    bg2 = Color(0xFF18263A),
-    ink = Color(0xFFE3ECF5),
-    inkSoft = Color(0xFF8EA2B8),
-    glass = Color(0x61283C55),
-    glassEdge = Color(0x59BEDCFF),
-    glassShade = Color(0x59000000),
-    tileFrame = Color(0x47A0BEDC),
-    tileEmpty = Color(0x733C4E64),
-    focus = Color(0xFF5CC6FF),
-    blob1 = Color(0xFF1F6FAE),
-    blob2 = Color(0xFF7A3F86),
-    blob3 = Color(0xFF1D8D8A),
-)
-
-val LocalMiiColors = staticCompositionLocalOf { DayColors }
+val LocalMiiColors = staticCompositionLocalOf { WiiColors }
 
 /**
  * Layout unit: 1% of the screen width, the same unit the HTML mockup uses (cqw),

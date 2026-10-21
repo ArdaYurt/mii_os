@@ -49,19 +49,24 @@ You only need the TV remote. It takes about five minutes the first time.
 
 To update later, repeat step 3 with the same address.
 
+### Favourite channels
+
+Apple TV, YouTube, Plex, Prime Video and Screen Share (AirScreen) always have the first five channels,
+with Mii_OS's own art. If one isn't installed yet its channel is greyed out with an **Install** tag;
+open it and press **Install** to go to its Play Store page.
+
 ### iPhone and iPad screen sharing
 
-The box can't receive AirPlay on its own. Install **AirScreen** from the Play Store; Mii_OS always puts
-it in the first channel slot. Open it, then on your iPhone or iPad use *Screen Mirroring* in Control
-Center and pick the TV.
+The box can't receive AirPlay on its own. Install **AirScreen** from the Screen Share channel. Open it,
+then on your iPhone or iPad use *Screen Mirroring* in Control Center and pick the TV.
 
 ## Using it
 
 | Remote | What it does |
 |---|---|
 | ← ↑ → ↓ | Move between channels. Going past the right or left edge turns the page. |
-| Down from the bottom row | Reach the Settings and Home setup buttons. |
-| OK | Open the channel screen, then **Start** to launch the app or **Menu** for its app info. |
+| Down from the bottom row | Reach the Settings and Home setup buttons. Settings opens the Mii_OS Settings screen. |
+| OK | The channel grows into its channel screen. **Start** launches the app, **Menu** shows its app info. |
 | Back | Close the channel screen. |
 | Home | Return to the first page. |
 
@@ -71,13 +76,16 @@ Center and pick the TV.
   home screen animates while you're not touching the remote, so the box stays idle and cool.
 - **Motion.** Every transition is a spring on GPU-only properties (scale, tilt, slide, fade), defined in
   [`Motion.kt`](app/src/main/java/com/miios/launcher/ui/Motion.kt) so the whole launcher moves with one feel.
+- **Wii colours.** White and soft grey with the Wii's sky blue for focus, in
+  [`Theme.kt`](app/src/main/java/com/miios/launcher/ui/Theme.kt).
 - **Glass.** The dock, round buttons and channel-screen bar blur the scene behind them. The scene is
   static, so each blur is rendered once and reused.
 - **Channel art.** For each app Mii_OS uses, in order: an image from
   [`assets/channel_art`](app/src/main/assets/channel_art) named after the app's package, the app's own
   TV banner, or its icon on a matching colour. Art is decoded at the size it's drawn.
-- **Pinned channels.** AirScreen, Apple TV, Plex, YouTube and Netflix come first, then everything else
-  alphabetically ([`AppRepository.kt`](app/src/main/java/com/miios/launcher/data/AppRepository.kt)).
+- **Favourite channels** and their art are listed in
+  [`ChannelStyles.kt`](app/src/main/java/com/miios/launcher/art/ChannelStyles.kt). The art is drawn as
+  shapes and text, so it is sharp at any resolution.
 
 Visual reference: [interactive mockup](https://claude.ai/artifact/YPhLo3wLJRHAAZicFzVCeF).
 
