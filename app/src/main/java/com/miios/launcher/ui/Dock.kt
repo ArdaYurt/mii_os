@@ -37,7 +37,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-/** The Wii's curved bottom bar: a round button on each side and the clock in the middle. */
+/** The Wii's curved bottom bar: Settings on the left, Screen Share on the right, the clock in the middle. */
 val DockShape = GenericShape { size, _ ->
     val rise = size.height * 0.24f
     moveTo(0f, rise)
@@ -47,13 +47,12 @@ val DockShape = GenericShape { size, _ ->
     close()
 }
 
-enum class DockButton { Settings, Setup }
+enum class DockButton { Settings, Share }
 
 @Composable
 fun Dock(
     now: LocalDateTime,
     focused: DockButton?,
-    setupNeedsAttention: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val unit = LocalUnit.current
@@ -64,15 +63,15 @@ fun Dock(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            RoundButton("Settings", focused == DockButton.Settings, badge = false) { drawMiiIcon(MiiIcon.Gear, iconInk) }
+            RoundButton("Settings", focused == DockButton.Settings) { drawMiiIcon(MiiIcon.Gear, iconInk) }
             Clock(now)
-            RoundButton("Home setup", focused == DockButton.Setup, badge = setupNeedsAttention) { drawMiiIcon(MiiIcon.Home, iconInk) }
+            RoundButton("Share", focused == DockButton.Share) { drawMiiIcon(MiiIcon.Screens, iconInk) }
         }
     }
 }
 
 @Composable
-private fun RoundButton(label: String, focused: Boolean, badge: Boolean, icon: DrawScope.() -> Unit) {
+private fun RoundButton(label: String, focused: Boolean, icon: DrawScope.() -> Unit) {
     val unit = LocalUnit.current
     val colors = LocalMiiColors.current
     val scale by animateFloatAsState(if (focused) 1.1f else 1f, Motion.focusScale, label = "dockScale")
@@ -91,15 +90,6 @@ private fun RoundButton(label: String, focused: Boolean, badge: Boolean, icon: D
         }
         Canvas(Modifier.fillMaxSize()) {
             if (ring > 0f) drawCircle(colors.focus.copy(alpha = ring), style = Stroke(unit.toPx() * 0.3f))
-        }
-        if (badge) {
-            Box(
-                Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = -unit * 0.6f, y = unit * 0.6f)
-                    .size(unit * 1.4f)
-                    .background(Color(0xFFFF5A4E), CircleShape),
-            )
         }
     }
 }

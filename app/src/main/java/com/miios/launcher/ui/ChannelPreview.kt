@@ -30,9 +30,15 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import com.miios.launcher.art.ChannelArt
 import com.miios.launcher.art.ChannelArtLoader
+import com.miios.launcher.art.ChannelStyles
 import com.miios.launcher.data.InstalledApp
 
 enum class PreviewButton { Menu, Start }
@@ -65,8 +71,9 @@ fun ChannelPreview(
         Modifier
             .fillMaxSize()
             .graphicsLayer {
-                // grow from the tile's rectangle to the full screen
-                val p = progress()
+                // grow from the tile's rectangle to the full screen. The spring overshoots 1 a touch
+                // as it settles; clamp, or the corner radius below goes negative and Compose throws.
+                val p = progress().coerceIn(0f, 1f)
                 val w = size.width
                 val h = size.height
                 val start = if (origin.width > 0f) origin else Rect(w * 0.4f, h * 0.4f, w * 0.6f, h * 0.6f)
@@ -79,7 +86,7 @@ fun ChannelPreview(
                 translationX = lerp(start.left, 0f, p) - w * 0.02f * l
                 translationY = lerp(start.top, 0f, p) - h * 0.02f * l
                 // the tile's rounded corners flatten out as it fills the screen
-                val cornerPx = unit.toPx() * 2f * (1f - p)
+                val cornerPx = (unit.toPx() * 2f * (1f - p)).coerceAtLeast(0f)
                 shape = RoundedCornerShape(CornerSize(cornerPx / sx.coerceAtLeast(0.01f)))
                 clip = true
                 alpha = (p * 4f).coerceAtMost(1f)
@@ -111,6 +118,29 @@ fun ChannelPreview(
                 }
             }
         }
+        // a line of help for channels that need it, e.g. Screen Share explaining AirPlay
+        val blurb = remember(app.packageName) { ChannelStyles.forApp(app.packageName, app.label)?.blurb }
+        if (blurb != null) {
+            GlassSurface(
+                RoundedCornerShape(unit * 1.6f),
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = unit * 12f)
+                    .fillMaxWidth(0.7f)
+                    .graphicsLayer { alpha = ((progress() - 0.6f) / 0.4f).coerceIn(0f, 1f) },
+            ) {
+                BasicText(
+                    blurb,
+                    Modifier.align(Alignment.Center).padding(horizontal = unit * 2f, vertical = unit * 1.2f),
+                    style = TextStyle(
+                        color = LocalMiiColors.current.ink,
+                        fontSize = with(LocalDensity.current) { (unit * 1.35f).toSp() },
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                    ),
+                )
+            }
+        }
         // white wash as the app starts
         Box(Modifier.fillMaxSize().graphicsLayer { alpha = launch() }.background(Color.White))
     }
@@ -119,7 +149,7 @@ fun ChannelPreview(
 private fun lerp(a: Float, b: Float, t: Float) = a + (b - a) * t
 
 @Composable
-private fun PillButton(text: String, icon: MiiIcon, focused: Boolean) {
+internal fun PillButton(text: String, icon: MiiIcon, focused: Boolean) {
     val unit = LocalUnit.current
     val colors = LocalMiiColors.current
     val scale = animateFloatAsState(if (focused) 1.08f else 1f, Motion.focusScale, label = "pill")

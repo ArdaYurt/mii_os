@@ -43,11 +43,18 @@ You only need the TV remote. It takes about five minutes the first time.
    Press *Go*, then *Install* when the download finishes. (This link only works while the repository
    is public. If it's private, download `mii-os.apk` from the Releases page on your phone and send it
    to the TV with the *Send Files to TV* app instead.)
-4. **Make it your home screen.** Open Mii_OS. Move down to the **Home setup** button (it has a red dot
-   until this step is done) and press OK. In the list that opens, choose **Mii_OS Home button** and
-   turn it on. From now on the Home button on your remote opens Mii_OS.
+4. **Make it your home screen.** The speed-up script on your laptop does this (its "make Mii_OS the
+   home screen" option), so the Home button on your remote opens Mii_OS.
 
-To update later, repeat step 3 with the same address.
+### Updates
+
+Mii_OS updates itself. When a new version is out, a pop-up asks **Update** or **Later**. Press OK on
+**Update** and confirm in Android's installer. The first time, Android asks you to allow Mii_OS to
+install apps: turn it on and press Back.
+
+The in-app updater needs the builds to be signed with one permanent key. Set that up once by running
+[`tools/signing/make-key.bat`](tools/signing/make-key.bat) on your Windows laptop (see *Building*), then
+uninstall Mii_OS and install it one last time with step 3.
 
 ### Favourite channels
 
@@ -90,7 +97,7 @@ TV channel screen in the launcher.
 | Remote | What it does |
 |---|---|
 | ← ↑ → ↓ | Move between channels. Going past the right or left edge turns the page. |
-| Down from the bottom row | Reach the Settings and Home setup buttons. Settings opens the Mii_OS Settings screen. |
+| Down from the bottom row | Reach the dock: **Settings** opens the Mii_OS Settings screen, **Share** opens AirScreen for iPhone/iPad screen sharing. |
 | OK | The channel grows into its channel screen. **Start** launches the app, **Menu** shows its app info. |
 | Back | Close the channel screen. |
 | Home | Return to the first page. |
@@ -119,13 +126,18 @@ Visual reference: [interactive mockup](https://claude.ai/artifact/YPhLo3wLJRHAAZ
 GitHub Actions builds `mii-os.apk` on every push and publishes it as the `latest` release.
 Locally: `./gradlew assembleRelease` with JDK 17 and the Android SDK (API 35).
 
-Release builds are signed with the debug key unless these repository secrets are set:
-`MII_KEYSTORE_BASE64`, `MII_KEYSTORE_PASSWORD`, `MII_KEY_ALIAS`, `MII_KEY_PASSWORD`. Without them,
-each CI build has a different key, so installing an update may require uninstalling the old version
-first. Adding a keystore once fixes that.
+Release builds are signed with the permanent key from the repository secrets `MII_KEYSTORE_BASE64`
+and `MII_KEYSTORE_PASSWORD` (optionally `MII_KEY_ALIAS` and `MII_KEY_PASSWORD`). Run
+[`tools/signing/make-key.bat`](tools/signing/make-key.bat) once on Windows to make the key and add the
+secrets; the key stays on your computer and in GitHub's secrets, never in this public repository.
+Without the secrets each build gets a throwaway key, updates need an uninstall first, and the in-app
+updater stays off (CI only publishes `version.json` for permanently signed builds).
+
+If Mii_OS crashes, the next start shows the error, and the full trace is in `files/last_crash_seen.txt`
+(`adb shell run-as com.miios.launcher cat files/last_crash_seen.txt`).
 
 ### Known limits
 
-- While the Home button service is on, a long press of Home no longer opens Google TV's dashboard.
-  Use the Settings button in the dock instead.
-- Not tested on hardware yet.
+- The box draws its interface at 1080p and scales it to 4K, like the stock home screen. Mii_OS's own
+  channel art is drawn as shapes, so it stays sharp; other apps' banners are loaded at their highest
+  resolution, but some apps only ship small ones.
