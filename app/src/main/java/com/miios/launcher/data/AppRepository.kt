@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.Drawable
 import com.miios.launcher.art.ChannelStyles
+import com.miios.launcher.tv.TvActivity
 
 /** One app the launcher can show as a channel. */
 data class InstalledApp(
@@ -46,6 +47,8 @@ object AppRepository {
                 )
             }
         }
+        // The TV channel (IPTV) is part of Mii_OS itself, not a separate app.
+        byPackage[ChannelStyles.TV] = InstalledApp(ChannelStyles.TV, "TV", TvActivity.intent(context), null, null)
         // Favourite channels always have a slot, even before the app is installed.
         for (pkg in pinned) {
             if (pkg !in byPackage) {
@@ -60,6 +63,7 @@ object AppRepository {
     /**
      * Favourite channels: always shown first, in this order, with Mii_OS art.
      * AirScreen gives iPhone and iPad screen sharing, since the box has no AirPlay of its own.
+     * TV is Mii_OS's own live IPTV channel.
      */
     val pinned = listOf(
         ChannelStyles.APPLE_TV,
@@ -67,6 +71,7 @@ object AppRepository {
         ChannelStyles.PLEX,
         ChannelStyles.PRIME_VIDEO,
         ChannelStyles.AIRSCREEN,
+        ChannelStyles.TV,
     )
 
     private fun pinnedRank(pkg: String): Int = pinned.indexOf(pkg).let { if (it < 0) pinned.size else it }

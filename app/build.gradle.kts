@@ -70,4 +70,8 @@ dependencies {
     // Installs the baseline profiles that Compose ships, so a sideloaded APK
     // starts fast without waiting for the Play Store to compile it.
     implementation("androidx.profileinstaller:profileinstaller:1.4.1")
+    // The TV channel's player: live HLS and MPEG-TS streams, with the box's hardware decoders.
+    val media3 = "1.5.1"
+    implementation("androidx.media3:media3-exoplayer:$media3")
+    implementation("androidx.media3:media3-exoplayer-hls:$media3")
 }

@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import com.miios.launcher.data.AppRepository
 import com.miios.launcher.data.InstalledApp
 import com.miios.launcher.service.HomeButtonService
+import com.miios.launcher.tv.TvActivity
 import com.miios.launcher.ui.LauncherActions
 import com.miios.launcher.ui.LauncherScreen
 import com.miios.launcher.ui.SettingsItem
@@ -34,6 +35,8 @@ class MainActivity : ComponentActivity() {
         }
 
         override fun openAppInfo(app: InstalledApp) {
+            // The TV channel's Menu opens its own setup, where the playlist is changed.
+            if (app.packageName == TvActivity.CHANNEL_ID) return start(TvActivity.intent(this@MainActivity, setup = true))
             if (!app.installed) return openStore(app.packageName)
             start(
                 Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${app.packageName}"))
