@@ -45,6 +45,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.miios.launcher.data.InstalledApp
+import com.miios.launcher.sound.Sfx
+import com.miios.launcher.sound.Sounds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -128,22 +130,27 @@ fun LauncherScreen(
         previewOpenedAt = android.os.SystemClock.uptimeMillis()
         zone = Zone.Preview
         previewButton = PreviewButton.Start
+        Sounds.play(Sfx.Select)
         scope.launch { previewAnim.animateTo(1f, Motion.preview) }
     }
     fun closePreview() {
         zone = Zone.Grid
+        Sounds.play(Sfx.Back)
         scope.launch { previewAnim.animateTo(0f, Motion.preview) }
     }
     fun openSettings() {
         zone = Zone.Settings
         settingsIndex = 0
+        Sounds.play(Sfx.Select)
         scope.launch { settingsAnim.animateTo(1f, Motion.preview) }
     }
     fun closeSettings() {
         zone = Zone.Dock
+        Sounds.play(Sfx.Back)
         scope.launch { settingsAnim.animateTo(0f, Motion.preview) }
     }
     fun startApp(app: InstalledApp) {
+        Sounds.play(Sfx.Launch)
         scope.launch {
             // Wii-style start: push in slightly and wash to white, then hand over to the app
             launchAnim.animateTo(1f, androidx.compose.animation.core.tween(260, easing = Motion.emphasized))
@@ -172,7 +179,10 @@ fun LauncherScreen(
         when (zone) {
             Zone.Preview -> closePreview()
             Zone.Settings -> closeSettings()
-            Zone.Update -> if (update !is UpdateState.Downloading) actions.dismissUpdate()
+            Zone.Update -> if (update !is UpdateState.Downloading) {
+                Sounds.play(Sfx.Back)
+                actions.dismissUpdate()
+            }
             else -> zone = Zone.Grid
         }
     }
@@ -188,12 +198,13 @@ fun LauncherScreen(
                 zoneBeforeUpdate = zone
                 zone = Zone.Update
                 updateButton = UpdateButton.Update
+                Sounds.play(Sfx.Notice)
                 updateAnim.animateTo(1f, Motion.preview)
             }
         }
     }
 
-    fun move(dx: Int, dy: Int) {
+    fun step(dx: Int, dy: Int) {
         leanX = dx
         leanY = dy
         moveId++
@@ -240,22 +251,41 @@ fun LauncherScreen(
         }
     }
 
+    fun move(dx: Int, dy: Int) {
+        val before = listOf(zone, index, dock, previewButton, settingsIndex, updateButton)
+        val pageBefore = page
+        step(dx, dy)
+        val after = listOf(zone, index, dock, previewButton, settingsIndex, updateButton)
+        when {
+            zone == Zone.Grid && index / PER_PAGE != pageBefore -> Sounds.play(Sfx.Page)
+            before != after -> Sounds.play(Sfx.Move)
+        }
+    }
+
     fun select() {
         when (zone) {
             Zone.Grid -> openPreview()
-            Zone.Dock -> if (dock == DockButton.Settings) openSettings() else actions.openScreenShare()
-            Zone.Settings -> actions.openSystemSetting(SettingsItem.entries[settingsIndex])
+            Zone.Dock -> if (dock == DockButton.Settings) {
+                openSettings()
+            } else {
+                Sounds.play(Sfx.Select)
+                actions.openScreenShare()
+            }
+            Zone.Settings -> {
+                Sounds.play(Sfx.Select)
+                actions.openSystemSetting(SettingsItem.entries[settingsIndex])
+            }
             Zone.Update -> when {
                 update !is UpdateState.Available -> Unit
-                updateButton == UpdateButton.Update -> actions.installUpdate()
-                else -> actions.dismissUpdate()
+                updateButton == UpdateButton.Update -> { Sounds.play(Sfx.Select); actions.installUpdate() }
+                else -> { Sounds.play(Sfx.Back); actions.dismissUpdate() }
             }
             Zone.Preview -> {
                 if (launchAnim.isRunning) return
                 if (android.os.SystemClock.uptimeMillis() - previewOpenedAt < 350) return
                 val app = apps.getOrNull(index) ?: return
                 when {
-                    previewButton == PreviewButton.Menu -> { actions.openAppInfo(app); closePreview() }
+                    previewButton == PreviewButton.Menu -> { Sounds.play(Sfx.Select); actions.openAppInfo(app); closePreview() }
                     app.installed -> startApp(app)
                     else -> { actions.launch(app); closePreview() }
                 }

@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.lifecycleScope
 import com.miios.launcher.data.AppRepository
 import com.miios.launcher.data.InstalledApp
+import com.miios.launcher.sound.Sounds
 import com.miios.launcher.art.ChannelStyles
 import com.miios.launcher.tv.TvActivity
 import com.miios.launcher.ui.LauncherActions
@@ -114,6 +115,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        // picks up a sound pack copied over while Mii_OS was in the background
+        Sounds.load(this)
         // Refresh in the background on every return so newly installed apps appear without a restart.
         lifecycleScope.launch {
             val loaded = withContext(Dispatchers.IO) { AppRepository.load(this@MainActivity) }
