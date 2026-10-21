@@ -35,7 +35,8 @@ jobs:
           # Check the key opens before the build, and use whatever alias it was made with.
           # Prints only alias names and types, never a password.
           if ! keytool -list -keystore "$RUNNER_TEMP/mii.jks" -storepass "$MII_KEYSTORE_PASSWORD" > "$RUNNER_TEMP/keys.txt" 2>&1; then
-            echo "::error title=Signing key::MII_KEYSTORE_PASSWORD doesn't open the keystore in MII_KEYSTORE_BASE64. Update the secret from mii-os-signing/password.txt."
+            echo "::error title=Signing key::keytool could not open the keystore: $(head -c 300 "$RUNNER_TEMP/keys.txt" | tr '\n' ' ')"
+            echo "::error title=Signing key::Keystore file is $(wc -c < "$RUNNER_TEMP/mii.jks") bytes, starts with $(head -c 4 "$RUNNER_TEMP/mii.jks" | od -An -tx1 | tr -d ' '); password is ${#MII_KEYSTORE_PASSWORD} characters."
             exit 1
           fi
           echo "::notice title=Signing key::$(grep -iE 'PrivateKeyEntry|Keystore type|Your keystore contains' "$RUNNER_TEMP/keys.txt" | tr '\n' ' ')"
