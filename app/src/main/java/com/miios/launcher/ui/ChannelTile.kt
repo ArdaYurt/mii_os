@@ -1,0 +1,207 @@
+package com.miios.launcher.ui
+
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.zIndex
+import com.miios.launcher.art.ChannelArt
+import com.miios.launcher.art.ChannelArtLoader
+import com.miios.launcher.data.InstalledApp
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+/**
+ * One channel. Focus pops it forward with a spring, leans it toward the direction the remote moved,
+ * then settles it into a slight upward tilt with a light sheen, like an Apple TV poster.
+ *
+ * @param lean direction of the last D-pad move (-1, 0 or 1 per axis); [moveId] changes on every move.
+ */
+@Composable
+fun ChannelTile(
+    app: InstalledApp?,
+    focused: Boolean,
+    leanX: Int,
+    leanY: Int,
+    moveId: Int,
+    modifier: Modifier = Modifier,
+) {
+    val colors = LocalMiiColors.current
+    val unit = LocalUnit.current
+    val density = LocalDensity.current
+    val radius = unit * 2f
+    val outer = RoundedCornerShape(radius)
+    val inner = RoundedCornerShape(radius - unit * 0.3f)
+
+    val scale = animateFloatAsState(if (focused) 1.12f else 1f, Motion.focusScale, label = "scale")
+    val glow = animateFloatAsState(if (focused) 1f else 0f, Motion.glow, label = "glow")
+    val tiltX = remember { Animatable(0f) }
+    val tiltY = remember { Animatable(0f) }
+    LaunchedEffect(focused, moveId) {
+        if (!focused) {
+            coroutineScope {
+                launch { tiltX.animateTo(0f, Motion.tilt) }
+                launch { tiltY.animateTo(0f, Motion.tilt) }
+            }
+            return@LaunchedEffect
+        }
+        // lean into the move, then settle
+        coroutineScope {
+            launch { tiltX.animateTo(leanX * 0.7f, Motion.tilt) }
+            launch { tiltY.animateTo(leanY * 0.7f, Motion.tilt) }
+        }
+        delay(90)
+        coroutineScope {
+            launch { tiltX.animateTo(0f, Motion.tilt) }
+            launch { tiltY.animateTo(-0.25f, Motion.tilt) }
+        }
+    }
+
+    Box(
+        modifier
+            .zIndex(if (focused) 1f else 0f)
+            .graphicsLayer {
+                scaleX = scale.value
+                scaleY = scale.value
+                rotationY = tiltX.value * 9f
+                rotationX = -tiltY.value * 9f
+                cameraDistance = 14f * density.density
+            }
+            .drawWithContent {
+                // focus glow sits behind the tile
+                if (glow.value > 0f) {
+                    val outline = outer.createOutline(size, layoutDirection, this)
+                    val spread = unit.toPx() * 0.9f
+                    for (i in 3 downTo 1) {
+                        val grow = spread * i / 3f
+                        drawContext.canvas.save()
+                        drawContext.transform.translate(-grow, -grow)
+                        drawOutline(
+                            RoundedCornerShape(radius + unit * (0.9f * i / 3f))
+                                .createOutline(size.copy(size.width + grow * 2, size.height + grow * 2), layoutDirection, this),
+                            colors.focus.copy(alpha = 0.10f * glow.value),
+                        )
+                        drawContext.canvas.restore()
+                    }
+                    drawContent()
+                    drawOutline(outline, colors.focus.copy(alpha = glow.value), style = Stroke(unit.toPx() * 0.32f))
+                } else {
+                    drawContent()
+                }
+            }
+            .clip(outer)
+            .background(if (app == null) colors.tileEmpty else colors.tileFrame),
+    ) {
+        if (app == null) {
+            EmptySlot(Modifier.fillMaxSize())
+        } else {
+            Box(Modifier.fillMaxSize().padding(unit * 0.3f).clip(inner)) {
+                ChannelArtView(app, Modifier.fillMaxSize())
+                // sheen: a soft highlight that moves opposite to the tilt
+                Canvas(Modifier.fillMaxSize()) {
+                    if (glow.value > 0f) {
+                        val c = Offset(size.width * (0.5f + tiltX.value * 0.4f), size.height * (0.4f + tiltY.value * 0.4f))
+                        drawRect(
+                            Brush.radialGradient(
+                                listOf(Color.White.copy(alpha = 0.32f * glow.value), Color.Transparent),
+                                center = c,
+                                radius = size.width * 0.55f,
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChannelArtView(app: InstalledApp, modifier: Modifier) {
+    val context = LocalContext.current
+    val colors = LocalMiiColors.current
+    var size by remember { mutableStateOf(IntSize.Zero) }
+    var art by remember(app.packageName) { mutableStateOf<ChannelArt?>(null) }
+    LaunchedEffect(app.packageName, size) {
+        if (size.width > 0) {
+            art = ChannelArtLoader.cached(app, size.width, size.height)
+                ?: ChannelArtLoader.load(context, app, size.width, size.height)
+        }
+    }
+    Box(modifier.onSizeChanged { size = it }, contentAlignment = Alignment.Center) {
+        when (val a = art) {
+            is ChannelArt.FullBleed -> Image(
+                bitmap = a.image,
+                contentDescription = app.label,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+            is ChannelArt.IconOnColor -> {
+                Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(a.background.copy(alpha = 0.85f), a.background))))
+                Image(bitmap = a.icon, contentDescription = null, modifier = Modifier.align(Alignment.Center).padding(bottom = LocalUnit.current * 1.2f))
+                ChannelLabel(app.label, Modifier.align(Alignment.BottomCenter))
+            }
+            null -> Box(Modifier.fillMaxSize().background(colors.tileEmpty))
+        }
+    }
+}
+
+@Composable
+private fun ChannelLabel(text: String, modifier: Modifier) {
+    val unit = LocalUnit.current
+    val fontSize = with(LocalDensity.current) { (unit * 1.05f).toSp() }
+    BasicText(
+        text = text,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        style = TextStyle(color = Color.White, fontSize = fontSize, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center),
+        modifier = modifier.fillMaxWidth().padding(horizontal = unit * 0.8f, vertical = unit * 0.7f),
+    )
+}
+
+@Composable
+private fun EmptySlot(modifier: Modifier) {
+    val unit = LocalUnit.current
+    Canvas(modifier.padding(unit * 2.2f)) {
+        val step = unit.toPx() * 1.2f
+        val stripe = Color.White.copy(alpha = 0.25f)
+        var x = -size.height
+        while (x < size.width) {
+            drawLine(stripe, Offset(x, size.height), Offset(x + size.height, 0f), strokeWidth = step / 2f)
+            x += step
+        }
+    }
+}
