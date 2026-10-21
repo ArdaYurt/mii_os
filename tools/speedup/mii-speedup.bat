@@ -30,6 +30,9 @@ goto :done
 
 :cleanup
 echo.
+echo  Keeping the screensaver on ^(without one the box goes to sleep when idle^):
+call :enable_list packages-keep.txt
+echo.
 echo  Turning off apps you don't need:
 call :disable_list packages-safe.txt
 
@@ -122,6 +125,7 @@ echo.
 echo  Turning everything back on:
 call :enable_list packages-safe.txt
 call :enable_list packages-full.txt
+call :enable_list packages-keep.txt
 for /f "tokens=*" %%c in ('adb -s %S% shell cmd package query-activities --brief -a android.intent.action.MAIN -c android.intent.category.HOME ^| findstr /c:"launcherx/"') do set "STOCK_HOME=%%c"
 if defined STOCK_HOME (
     adb -s %S% shell cmd package set-home-activity !STOCK_HOME! >nul 2>&1

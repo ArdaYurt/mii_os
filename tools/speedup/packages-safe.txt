@@ -12,6 +12,5 @@ com.google.android.youtube.tvunplugged      # YouTube TV (US-only live TV servic
 com.android.printspooler                    # Printing
 com.android.bips                            # Printing (built-in print service)
 com.android.printservice.recommendation     # Printing (print service suggestions)
-com.android.dreams.basic                    # Basic colours screensaver
 com.android.wallpaper.livepicker            # Live wallpaper picker
 com.android.egg                             # Android version easter egg

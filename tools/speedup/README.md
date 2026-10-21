@@ -15,7 +15,7 @@ it so it opens and scrolls faster, and opens it on the TV. If you put a `mii-os.
 uses that file instead.
 
 **Option 2, safe cleanup.** Turns off apps nobody uses on a TV box: Send feedback, TalkBack, Play
-Games, printing, the basic screensaver, Device Health Services, YouTube TV and the old recommendation
+Games, printing, Device Health Services, YouTube TV and the old recommendation
 rows. The full list is in [`packages-safe.txt`](packages-safe.txt). It also freezes apps waiting in the
 background so they stop using the processor, clears app caches, and pre-compiles Mii_OS if it's
 installed.
@@ -24,11 +24,15 @@ Android's animation speed stays at normal. Many guides set it to half speed, but
 skips frames and looks choppy, so the script puts it back to normal if an earlier version changed it.
 
 **Option 3, full speed-up.** Everything in option 2, plus the stock Google TV home screen and the apps
-that feed it (Google TV films and shows, Ambient mode, YouTube Music, and the setup wizard, which can
+that feed it (Google TV films and shows, YouTube Music, and the setup wizard, which can
 take the home screen back after a restart). These use the most memory, and afterwards Mii_OS is the
 box's only home screen. See [`packages-full.txt`](packages-full.txt). Only choose this once you're
 happy with Mii_OS as your home. This is the step that makes the biggest difference: options 1 and 2
 alone leave the stock Google TV home running.
+
+The screensavers are always left on (and switched back on if an earlier version turned them off).
+Without a screensaver, Android puts the box to sleep at the moment the screensaver would start, so
+it looks as if the box switched itself off.
 
 **Option 4, undo** turns everything back on and resets the settings. `mii-restore.bat` does the same.
 
