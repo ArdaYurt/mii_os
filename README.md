@@ -99,7 +99,8 @@ TV channel screen in the launcher.
 | ← ↑ → ↓ | Move between channels. Going past the right or left edge turns the page. |
 | Down from the bottom row | Reach the dock: **Settings** opens the Mii_OS Settings screen, **Share** opens AirScreen for iPhone/iPad screen sharing. |
 | OK | The channel grows into its channel screen. **Start** launches the app, **Menu** shows its app info. |
-| Back | Close the channel screen. |
+| Hold OK (or the menu button) | Options for that channel: **Move** it (arrows carry it, OK puts it down), make a **New folder**, or **Add to** an existing folder. On a folder: move, rename or remove it. Inside a folder: move a channel back out. |
+| Back | Close the channel screen, folder or menu. |
 | Home | Return to the first page. |
 
 ### HOME Menu

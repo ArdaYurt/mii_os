@@ -12,7 +12,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.lifecycleScope
 import com.miios.launcher.data.AppRepository
+import com.miios.launcher.data.HomeLayout
 import com.miios.launcher.data.InstalledApp
+import com.miios.launcher.data.Slot
 import com.miios.launcher.sound.Sounds
 import com.miios.launcher.art.ChannelStyles
 import com.miios.launcher.tv.TvActivity
@@ -28,6 +30,8 @@ import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
 
     private val apps = mutableStateOf<List<InstalledApp>>(emptyList())
+    private val slots = mutableStateOf<List<Slot>>(emptyList())
+    private val layout by lazy { HomeLayout(this) }
     private val homePresses = mutableIntStateOf(0)
     private val update = mutableStateOf<UpdateState>(UpdateState.None)
     private var dismissedUpdate = 0
@@ -82,6 +86,34 @@ class MainActivity : ComponentActivity() {
             update.value = UpdateState.None
         }
 
+        override fun saveOrder(slots: List<Slot>) {
+            layout.saveOrder(slots)
+            rearrange()
+        }
+
+        override fun newFolder(pkg: String, name: String): String =
+            layout.newFolder(slots.value, pkg, name).also { rearrange() }
+
+        override fun addToFolder(pkg: String, folderId: String) {
+            layout.addToFolder(slots.value, pkg, folderId)
+            rearrange()
+        }
+
+        override fun removeFromFolder(pkg: String, folderId: String) {
+            layout.removeFromFolder(slots.value, pkg, folderId)
+            rearrange()
+        }
+
+        override fun renameFolder(folderId: String, name: String) {
+            layout.renameFolder(folderId, name)
+            rearrange()
+        }
+
+        override fun deleteFolder(folderId: String) {
+            layout.deleteFolder(slots.value, folderId)
+            rearrange()
+        }
+
         override fun openScreenShare() {
             val app = apps.value.firstOrNull { it.packageName == ChannelStyles.AIRSCREEN }
             val intent = app?.launchIntent
@@ -105,7 +137,7 @@ class MainActivity : ComponentActivity() {
         }
         setContent {
             LauncherScreen(
-                apps = apps.value,
+                slots = slots.value,
                 homePresses = homePresses.intValue,
                 update = update.value,
                 actions = actions,
@@ -120,13 +152,21 @@ class MainActivity : ComponentActivity() {
         // Refresh in the background on every return so newly installed apps appear without a restart.
         lifecycleScope.launch {
             val loaded = withContext(Dispatchers.IO) { AppRepository.load(this@MainActivity) }
-            if (loaded.map { it.packageName } != apps.value.map { it.packageName }) apps.value = loaded
+            if (loaded.map { it.packageName } != apps.value.map { it.packageName }) {
+                apps.value = loaded
+                rearrange()
+            }
         }
         lifecycleScope.launch {
             val newer = Updater.check(this@MainActivity) ?: return@launch
             // "Later" holds that version back until the app restarts; a newer one asks again.
             if (newer != dismissedUpdate && update.value is UpdateState.None) update.value = UpdateState.Available(newer)
         }
+    }
+
+    /** Rebuilds the home screen from the installed apps and the saved arrangement. */
+    private fun rearrange() {
+        slots.value = layout.arrange(apps.value)
     }
 
     override fun onNewIntent(intent: Intent) {

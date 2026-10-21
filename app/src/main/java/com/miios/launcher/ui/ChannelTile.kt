@@ -37,6 +37,12 @@ import androidx.compose.ui.zIndex
 import com.miios.launcher.art.ChannelArt
 import com.miios.launcher.art.ChannelArtLoader
 import com.miios.launcher.data.InstalledApp
+import com.miios.launcher.data.Slot
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.text.font.FontWeight
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -49,13 +55,15 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun ChannelTile(
-    app: InstalledApp?,
+    slot: Slot?,
     focused: Boolean,
     leanX: Int,
     leanY: Int,
     moveId: Int,
     modifier: Modifier = Modifier,
     onFocusedBounds: (Rect) -> Unit = {},
+    /** Being moved: it lifts further off the grid. */
+    lifted: Boolean = false,
 ) {
     val colors = LocalMiiColors.current
     val unit = LocalUnit.current
@@ -64,7 +72,7 @@ fun ChannelTile(
     val outer = RoundedCornerShape(radius)
     val inner = RoundedCornerShape(radius - unit * 0.3f)
 
-    val scale = animateFloatAsState(if (focused) 1.12f else 1f, Motion.focusScale, label = "scale")
+    val scale = animateFloatAsState(if (lifted) 1.2f else if (focused) 1.12f else 1f, Motion.focusScale, label = "scale")
     val glow = animateFloatAsState(if (focused) 1f else 0f, Motion.glow, label = "glow")
     val tiltX = remember { Animatable(0f) }
     val tiltY = remember { Animatable(0f) }
@@ -123,11 +131,14 @@ fun ChannelTile(
                 }
             }
             .clip(outer)
-            .background(if (app == null) colors.tileEmpty else colors.tileFrame),
+            .background(if (slot == null) colors.tileEmpty else colors.tileFrame),
     ) {
-        if (app == null) {
+        if (slot == null) {
             EmptySlot(Modifier.fillMaxSize())
+        } else if (slot is Slot.Folder) {
+            FolderArt(slot, Modifier.fillMaxSize().padding(unit * 0.3f).clip(inner))
         } else {
+            val app = (slot as Slot.App).app
             Box(Modifier.fillMaxSize().padding(unit * 0.3f).clip(inner)) {
                 LoadedArt(app, Modifier.fillMaxSize().notInstalled(!app.installed))
                 if (!app.installed) InstallTag(Modifier.align(Alignment.BottomEnd).padding(unit * 0.6f))
@@ -146,6 +157,30 @@ fun ChannelTile(
                 }
             }
         }
+    }
+}
+
+/** A folder: up to four of its channels in miniature, above its name. */
+@Composable
+private fun FolderArt(folder: Slot.Folder, modifier: Modifier) {
+    val unit = LocalUnit.current
+    val colors = LocalMiiColors.current
+    Column(
+        modifier.background(colors.bg2).padding(unit * 0.7f),
+        verticalArrangement = Arrangement.spacedBy(unit * 0.4f),
+    ) {
+        val minis = folder.apps.take(4)
+        for (r in 0 until 2) {
+            Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(unit * 0.4f)) {
+                for (c in 0 until 2) {
+                    val app = minis.getOrNull(r * 2 + c)
+                    Box(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(unit * 0.6f)).background(colors.tileEmpty)) {
+                        if (app != null) LoadedArt(app, Modifier.fillMaxSize())
+                    }
+                }
+            }
+        }
+        Label(folder.name, unit * 1.1f, colors.ink, FontWeight.Bold, Modifier.fillMaxWidth())
     }
 }
 
