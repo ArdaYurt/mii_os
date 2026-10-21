@@ -111,27 +111,36 @@ for /f "skip=1 tokens=1,2" %%a in ('adb devices') do if "%%b"=="device" (
     set /a N+=1
     set "S=%%a"
 )
-if not "%N%"=="1" (
-    echo.
-    echo  Type your Mi Box's IP address. You'll find it on the box under
-    echo  Settings ^> Network ^& Internet ^> your Wi-Fi network. For example: 192.168.1.20
-    set "IP="
-    set /p "IP= IP address: "
-    if not defined IP exit /b 1
-    if "!IP::=!"=="!IP!" set "IP=!IP!:5555"
-    adb connect !IP!
-    echo  If the TV asks "Allow USB debugging?", tick "Always allow" and press OK.
-    set "S=!IP!"
-    for /l %%i in (1,1,20) do (
-        adb -s !S! get-state 2>nul | find "device" >nul && goto :pick_box_check
-        timeout /t 2 /nobreak >nul
-    )
+rem One device already connected: use it if it's the Mi Box (it may be the emulator instead).
+if "%N%"=="1" call :confirm_box && exit /b 0
+
+echo.
+echo  Type your Mi Box's IP address. You'll find it on the box under
+echo  Settings ^> Network ^& Internet ^> your Wi-Fi network. For example: 192.168.1.20
+set "IP="
+set /p "IP= IP address: "
+if not defined IP exit /b 1
+if "%IP::=%"=="%IP%" set "IP=%IP%:5555"
+adb connect %IP%
+echo  If the TV asks "Allow USB debugging?", tick "Always allow" and press OK.
+set "S=%IP%"
+set "TRIES=0"
+:pick_box_wait
+adb -s %S% get-state 2>nul | find "device" >nul && goto :pick_box_found
+set /a TRIES+=1
+if %TRIES% GEQ 20 (
     echo.
     echo  Couldn't reach the box. Check that USB debugging is on in Developer options and
     echo  that the laptop and the box are on the same Wi-Fi, then try again.
     exit /b 1
 )
-:pick_box_check
+timeout /t 2 /nobreak >nul
+goto :pick_box_wait
+:pick_box_found
+call :confirm_box
+exit /b %errorlevel%
+
+:confirm_box
 set "MODEL="
 for /f "delims=" %%m in ('adb -s %S% shell getprop ro.product.model') do set "MODEL=%%m"
 echo.
