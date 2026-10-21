@@ -82,6 +82,8 @@ if errorlevel 2 exit /b 1
 adb -s %S% uninstall com.miios.launcher >nul 2>&1
 adb -s %S% install "%APK%" > "%TEMP%\mii-install.txt" 2>&1
 findstr /c:"Success" "%TEMP%\mii-install.txt" >nul && goto :install_ok
+rem Mii_OS is gone now; if it was the only home screen, bring the stock one back so the box isn't left without one.
+adb -s %S% shell pm enable com.google.android.apps.tv.launcherx >nul 2>&1
 :install_failed
 echo.
 echo  The install didn't work. This is what the box said:
@@ -89,6 +91,8 @@ type "%TEMP%\mii-install.txt"
 exit /b 1
 :install_ok
 echo    OK Mii_OS installed
+rem After a full speed-up Mii_OS is the only home; an uninstall above drops that choice, so set it again.
+adb -s %S% shell pm list packages -d 2>nul | findstr /c:"launcherx" >nul && adb -s %S% shell cmd package set-home-activity com.miios.launcher/.MainActivity >nul 2>&1
 call :compile_mii
 adb -s %S% shell am start -n com.miios.launcher/.MainActivity >nul 2>&1
 echo    OK Mii_OS is open on the TV
