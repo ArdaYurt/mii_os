@@ -13,11 +13,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.lifecycleScope
 import com.miios.launcher.data.AppRepository
 import com.miios.launcher.data.InstalledApp
-import com.miios.launcher.service.HomeButtonService
+import com.miios.launcher.art.ChannelStyles
 import com.miios.launcher.tv.TvActivity
 import com.miios.launcher.ui.LauncherActions
 import com.miios.launcher.ui.LauncherScreen
 import com.miios.launcher.ui.SettingsItem
+import com.miios.launcher.ui.UpdateState
+import com.miios.launcher.update.Updater
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -26,7 +28,8 @@ class MainActivity : ComponentActivity() {
 
     private val apps = mutableStateOf<List<InstalledApp>>(emptyList())
     private val homePresses = mutableIntStateOf(0)
-    private val homeCaptureOn = mutableStateOf(true)
+    private val update = mutableStateOf<UpdateState>(UpdateState.None)
+    private var dismissedUpdate = 0
 
     private val actions = object : LauncherActions {
         override fun launch(app: InstalledApp) {
@@ -49,13 +52,39 @@ class MainActivity : ComponentActivity() {
                 SettingsItem.Network -> Settings.ACTION_WIFI_SETTINGS
                 SettingsItem.Display -> Settings.ACTION_DISPLAY_SETTINGS
                 SettingsItem.Apps -> Settings.ACTION_APPLICATION_SETTINGS
-                SettingsItem.HomeButton -> Settings.ACTION_ACCESSIBILITY_SETTINGS
                 SettingsItem.DateTime -> Settings.ACTION_DATE_SETTINGS
                 SettingsItem.System -> Settings.ACTION_SETTINGS
             }
             // Google TV doesn't have every settings page; fall back to the main one.
             val intent = Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             if (!tryStart(intent)) start(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }
+
+        override fun installUpdate() {
+            val available = update.value as? UpdateState.Available ?: return
+            if (!Updater.canInstall(this@MainActivity)) return
+            update.value = UpdateState.Downloading(-1f)
+            lifecycleScope.launch {
+                try {
+                    Updater.install(this@MainActivity) { p -> runOnUiThread { update.value = UpdateState.Downloading(p) } }
+                } catch (e: Exception) {
+                    Toast.makeText(this@MainActivity, "Couldn't download the update. Try again later.", Toast.LENGTH_LONG).show()
+                    dismissedUpdate = available.version
+                }
+                // Android's installer takes over from here; it asks before installing.
+                update.value = UpdateState.None
+            }
+        }
+
+        override fun dismissUpdate() {
+            (update.value as? UpdateState.Available)?.let { dismissedUpdate = it.version }
+            update.value = UpdateState.None
+        }
+
+        override fun openScreenShare() {
+            val app = apps.value.firstOrNull { it.packageName == ChannelStyles.AIRSCREEN }
+            val intent = app?.launchIntent
+            if (intent != null) start(intent) else openStore(ChannelStyles.AIRSCREEN)
         }
     }
 
@@ -69,11 +98,15 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        CrashLog.install(this)
+        CrashLog.takeLast(this)?.let {
+            Toast.makeText(this, "Mii_OS restarted after an error: $it", Toast.LENGTH_LONG).show()
+        }
         setContent {
             LauncherScreen(
                 apps = apps.value,
                 homePresses = homePresses.intValue,
-                homeCaptureOn = homeCaptureOn.value,
+                update = update.value,
                 actions = actions,
             )
         }
@@ -81,11 +114,15 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        homeCaptureOn.value = HomeButtonService.isEnabled(this)
         // Refresh in the background on every return so newly installed apps appear without a restart.
         lifecycleScope.launch {
             val loaded = withContext(Dispatchers.IO) { AppRepository.load(this@MainActivity) }
             if (loaded.map { it.packageName } != apps.value.map { it.packageName }) apps.value = loaded
+        }
+        lifecycleScope.launch {
+            val newer = Updater.check(this@MainActivity) ?: return@launch
+            // "Later" holds that version back until the app restarts; a newer one asks again.
+            if (newer != dismissedUpdate && update.value is UpdateState.None) update.value = UpdateState.Available(newer)
         }
     }
 

@@ -16,7 +16,7 @@ import kotlin.math.sin
  * The Mii_OS icon set. Every icon is drawn on a 24-unit grid with one rounded stroke weight,
  * so they read as a family at any size, from a dock button to a 4K channel screen.
  */
-enum class MiiIcon { Gear, Home, Wifi, Display, Apps, Remote, Clock, Sliders, Download, Play, PlayCircle, Screens, Antenna, Chevron, Back, Film }
+enum class MiiIcon { Gear, Home, Wifi, Display, Apps, Remote, Clock, Sliders, Download, Play, PlayCircle, Screens, Antenna, Chevron, Back, Film, Plus, Dots, Spark, Waves, Kick }
 
 fun DrawScope.drawMiiIcon(icon: MiiIcon, color: Color, weight: Float = 2f) {
     val k = size.minDimension / 24f
@@ -122,6 +122,31 @@ fun DrawScope.drawMiiIcon(icon: MiiIcon, color: Color, weight: Float = 2f) {
             line(3f, 12f, 7.5f, 12f)
             line(16.5f, 12f, 21f, 12f)
             path(fill = true) { m(10.4f, 9.4f); l(14.2f, 12f); l(10.4f, 14.6f); close() }
+        }
+        MiiIcon.Plus -> {
+            // an arc sweeping over a plus, like a star crossing the sky
+            path { m(2.5f, 15f); q(9f, 2.5f, 21.5f, 8.5f) }
+            line(15.5f, 10.5f, 15.5f, 20.5f)
+            line(10.5f, 15.5f, 20.5f, 15.5f)
+        }
+        MiiIcon.Dots -> {
+            for (x in 0 until 3) circle(6f + x * 6f, 9f, 2.2f, fill = true)
+            for (x in 0 until 3) circle(6f + x * 6f, 15f, 2.2f, fill = true)
+        }
+        MiiIcon.Spark -> path(fill = true) {
+            m(12f, 2.5f); q(13f, 11f, 21.5f, 12f); q(13f, 13f, 12f, 21.5f); q(11f, 13f, 2.5f, 12f); q(11f, 11f, 12f, 2.5f); close()
+        }
+        MiiIcon.Waves -> {
+            circle(12f, 12f, 9.5f)
+            path { m(6.8f, 9f); q(12.5f, 7f, 17.4f, 9.8f) }
+            path { m(7.4f, 12.4f); q(12f, 10.8f, 16.4f, 13.1f) }
+            path { m(8f, 15.6f); q(11.8f, 14.4f, 15.4f, 16.2f) }
+        }
+        MiiIcon.Kick -> path(fill = true) {
+            // a blocky K, built on a grid like the brand's pixel lettering
+            m(4f, 3f); l(9.5f, 3f); l(9.5f, 8.5f); l(12.5f, 8.5f); l(12.5f, 5.5f); l(15f, 5.5f); l(15f, 3f); l(20.5f, 3f)
+            l(20.5f, 9f); l(18f, 9f); l(18f, 11.5f); l(15.5f, 11.5f); l(15.5f, 12.5f); l(18f, 12.5f); l(18f, 15f); l(20.5f, 15f)
+            l(20.5f, 21f); l(15f, 21f); l(15f, 18.5f); l(12.5f, 18.5f); l(12.5f, 15.5f); l(9.5f, 15.5f); l(9.5f, 21f); l(4f, 21f); close()
         }
     }
 }

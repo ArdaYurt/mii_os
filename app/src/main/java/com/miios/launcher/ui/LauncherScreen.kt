@@ -54,13 +54,18 @@ interface LauncherActions {
     fun launch(app: InstalledApp)
     fun openAppInfo(app: InstalledApp)
     fun openSystemSetting(item: SettingsItem)
+    /** Opens AirScreen for iPhone/iPad screen sharing, or its store page if it isn't installed. */
+    fun openScreenShare()
+    fun installUpdate()
+    /** Hides the update prompt until the next check. */
+    fun dismissUpdate()
 }
 
 private const val COLS = 4
 private const val ROWS = 3
 private const val PER_PAGE = COLS * ROWS
 
-private enum class Zone { Grid, Dock, Preview, Settings }
+private enum class Zone { Grid, Dock, Preview, Settings, Update }
 
 /**
  * The home screen. Focus is driven by one key handler rather than Compose's focus search,
@@ -71,7 +76,7 @@ private enum class Zone { Grid, Dock, Preview, Settings }
 fun LauncherScreen(
     apps: List<InstalledApp>,
     homePresses: Int,
-    homeCaptureOn: Boolean,
+    update: UpdateState,
     actions: LauncherActions,
 ) {
     var now by remember { mutableStateOf(LocalDateTime.now()) }
@@ -105,14 +110,22 @@ fun LauncherScreen(
     val launchAnim = remember { Animatable(0f) }
     val settingsAnim = remember { Animatable(0f) }
     val settingsVisible by remember { derivedStateOf { settingsAnim.value > 0f } }
+    val updateAnim = remember { Animatable(0f) }
+    val updateVisible by remember { derivedStateOf { updateAnim.value > 0f } }
+    var updateButton by remember { mutableStateOf(UpdateButton.Update) }
+    var zoneBeforeUpdate by remember { mutableStateOf(Zone.Grid) }
     // Where the focused tile sits on screen, so the channel screen can grow out of it.
     // A plain holder, not state: it changes every frame while a tile animates.
     val focusedBounds = remember { arrayOf(Rect.Zero) }
     var previewOrigin by remember { mutableStateOf(Rect.Zero) }
+    // When the channel screen opened. OK presses right after it are ignored, so the press that
+    // opened it (or the remote's repeat of it) can't also hit Start.
+    var previewOpenedAt by remember { mutableStateOf(0L) }
 
     fun openPreview() {
         if (apps.getOrNull(index) == null) return
         previewOrigin = focusedBounds[0]
+        previewOpenedAt = android.os.SystemClock.uptimeMillis()
         zone = Zone.Preview
         previewButton = PreviewButton.Start
         scope.launch { previewAnim.animateTo(1f, Motion.preview) }
@@ -147,6 +160,8 @@ fun LauncherScreen(
             launchAnim.snapTo(0f)
             previewAnim.snapTo(0f)
             settingsAnim.snapTo(0f)
+            if (zone == Zone.Update) actions.dismissUpdate()
+            updateAnim.snapTo(0f)
             zone = Zone.Grid
             index = 0
         }
@@ -157,7 +172,24 @@ fun LauncherScreen(
         when (zone) {
             Zone.Preview -> closePreview()
             Zone.Settings -> closeSettings()
+            Zone.Update -> if (update !is UpdateState.Downloading) actions.dismissUpdate()
             else -> zone = Zone.Grid
+        }
+    }
+
+    // The update prompt opens over the grid when a new build is found, never over an open channel.
+    LaunchedEffect(update) {
+        when {
+            update is UpdateState.None && zone == Zone.Update -> {
+                zone = zoneBeforeUpdate
+                updateAnim.animateTo(0f, Motion.preview)
+            }
+            update is UpdateState.Available && zone != Zone.Update && (zone == Zone.Grid || zone == Zone.Dock) -> {
+                zoneBeforeUpdate = zone
+                zone = Zone.Update
+                updateButton = UpdateButton.Update
+                updateAnim.animateTo(1f, Motion.preview)
+            }
         }
     }
 
@@ -171,13 +203,16 @@ fun LauncherScreen(
                 val next = settingsIndex + dx + dy * SETTINGS_COLS
                 if (next in 0 until count && (dx == 0 || next / SETTINGS_COLS == settingsIndex / SETTINGS_COLS)) settingsIndex = next
             }
+            Zone.Update -> if (dx != 0) {
+                updateButton = if (dx < 0) UpdateButton.Later else UpdateButton.Update
+            }
             Zone.Preview -> if (dx != 0) {
                 previewButton = if (dx < 0) PreviewButton.Menu else PreviewButton.Start
             }
             Zone.Dock -> when {
                 dy < 0 -> zone = Zone.Grid
                 dx < 0 -> dock = DockButton.Settings
-                dx > 0 -> dock = DockButton.Setup
+                dx > 0 -> dock = DockButton.Share
             }
             Zone.Grid -> {
                 val local = index % PER_PAGE
@@ -196,7 +231,7 @@ fun LauncherScreen(
                     when {
                         nr >= ROWS -> {
                             zone = Zone.Dock
-                            dock = if (col < 2) DockButton.Settings else DockButton.Setup
+                            dock = if (col < 2) DockButton.Settings else DockButton.Share
                         }
                         nr >= 0 -> index += dy * COLS
                     }
@@ -208,10 +243,16 @@ fun LauncherScreen(
     fun select() {
         when (zone) {
             Zone.Grid -> openPreview()
-            Zone.Dock -> if (dock == DockButton.Settings) openSettings() else actions.openSystemSetting(SettingsItem.HomeButton)
+            Zone.Dock -> if (dock == DockButton.Settings) openSettings() else actions.openScreenShare()
             Zone.Settings -> actions.openSystemSetting(SettingsItem.entries[settingsIndex])
+            Zone.Update -> when {
+                update !is UpdateState.Available -> Unit
+                updateButton == UpdateButton.Update -> actions.installUpdate()
+                else -> actions.dismissUpdate()
+            }
             Zone.Preview -> {
                 if (launchAnim.isRunning) return
+                if (android.os.SystemClock.uptimeMillis() - previewOpenedAt < 350) return
                 val app = apps.getOrNull(index) ?: return
                 when {
                     previewButton == PreviewButton.Menu -> { actions.openAppInfo(app); closePreview() }
@@ -222,6 +263,7 @@ fun LauncherScreen(
         }
     }
 
+    var okDown by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
@@ -236,13 +278,20 @@ fun LauncherScreen(
                     Key.DirectionCenter, Key.Enter, Key.NumPadEnter -> true
                     else -> false
                 }
-                if (handled && event.type == KeyEventType.KeyDown) {
+                if (handled) {
                     when (event.key) {
-                        Key.DirectionLeft -> move(-1, 0)
-                        Key.DirectionRight -> move(1, 0)
-                        Key.DirectionUp -> move(0, -1)
-                        Key.DirectionDown -> move(0, 1)
-                        else -> select()
+                        Key.DirectionLeft -> if (event.type == KeyEventType.KeyDown) move(-1, 0)
+                        Key.DirectionRight -> if (event.type == KeyEventType.KeyDown) move(1, 0)
+                        Key.DirectionUp -> if (event.type == KeyEventType.KeyDown) move(0, -1)
+                        Key.DirectionDown -> if (event.type == KeyEventType.KeyDown) move(0, 1)
+                        // OK acts on release, once: holding it (or a remote that repeats it) can't
+                        // open a channel and press Start in the same go.
+                        else -> if (event.type == KeyEventType.KeyDown) {
+                            okDown = event.nativeKeyEvent.repeatCount == 0
+                        } else if (event.type == KeyEventType.KeyUp && okDown) {
+                            okDown = false
+                            select()
+                        }
                     }
                 }
                 handled
@@ -290,7 +339,6 @@ fun LauncherScreen(
             Dock(
                 now = now,
                 focused = if (zone == Zone.Dock) dock else null,
-                setupNeedsAttention = !homeCaptureOn,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .offset(y = unit * 1f)
@@ -304,7 +352,11 @@ fun LauncherScreen(
             }
 
             if (zone == Zone.Settings || settingsVisible) {
-                SettingsMenu(settingsIndex, homeCaptureOn) { settingsAnim.value }
+                SettingsMenu(settingsIndex) { settingsAnim.value }
+            }
+
+            if (zone == Zone.Update || updateVisible) {
+                UpdatePrompt(update, updateButton) { updateAnim.value }
             }
         }
     }
