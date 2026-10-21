@@ -60,6 +60,31 @@ open it and press **Install** to go to its Play Store page.
 The box can't receive AirPlay on its own. Install **AirScreen** from the Screen Share channel. Open it,
 then on your iPhone or iPad use *Screen Mirroring* in Control Center and pick the TV.
 
+### TV channel (live IPTV)
+
+The **TV** channel plays live TV inside Mii_OS from your own IPTV playlist. Mii_OS doesn't come with
+any channels: you add the M3U playlist address your IPTV provider gives you (with Xtream-style logins
+it looks like `http://host:port/get.php?username=…&password=…&type=m3u_plus&output=ts`).
+
+1. Open the **TV** channel and press **Start**. The first time, the setup screen opens.
+2. Easiest: on your phone, open the address shown at the bottom of the screen (for example
+   `http://192.168.1.20:8080`), paste the playlist address and press **Send to TV**. Your phone
+   must be on the same Wi-Fi. Or press OK on **Playlist address** and type it with the remote.
+3. If your provider gives a separate guide (XMLTV/EPG) address, add it the same way. Many playlists
+   include one already.
+4. Choose **Watch TV**. Mii_OS remembers the playlist and opens on your last channel next time.
+
+| Remote, while watching | What it does |
+|---|---|
+| ↑ / ↓ (or Channel +/−) | Next / previous channel |
+| OK or ← | Channel list. ← → change group, OK tunes, the ⚙ row at the top changes the playlist |
+| → | Show what's on now and next |
+| Number keys | Go to a channel number |
+| Back | Hide the info, then back to the home screen |
+
+To change the playlist later, use the ⚙ row at the top of the channel list, or **Menu** on the
+TV channel screen in the launcher.
+
 ## Using it
 
 | Remote | What it does |
