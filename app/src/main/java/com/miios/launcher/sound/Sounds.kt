@@ -41,7 +41,7 @@ object Sounds {
     var enabled by mutableStateOf(true)
         private set
 
-    fun setEnabled(on: Boolean) {
+    fun switchTo(on: Boolean) {
         enabled = on
         prefs?.edit()?.putBoolean("enabled", on)?.apply()
     }

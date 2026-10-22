@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
         override fun openSystemSetting(item: SettingsItem) {
             if (item == SettingsItem.Updates) return checkForUpdate(force = true)
             if (item == SettingsItem.Sounds) {
-                Sounds.setEnabled(!Sounds.enabled)
+                Sounds.switchTo(!Sounds.enabled)
                 // a chime when turning on, so it's clear right away whether sound comes through
                 Sounds.play(com.miios.launcher.sound.Sfx.Launch)
                 return
