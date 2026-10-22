@@ -44,6 +44,8 @@ class MainActivity : ComponentActivity() {
     private val slots = mutableStateOf<List<Slot>>(emptyList())
     private val layout by lazy { HomeLayout(this) }
     private val homePresses = mutableIntStateOf(0)
+    /** A return from the HOME Menu: which one (to replay it) and how long it lasts. */
+    private val homeReturn = mutableStateOf(0 to 0L)
     private val update = mutableStateOf<UpdateState>(UpdateState.None)
     private var dismissedUpdate = 0
 
@@ -158,6 +160,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         CrashLog.install(this)
+        takeReturn(intent)
         CrashLog.takeLast(this)?.let {
             Toast.makeText(this, "Mii_OS restarted after an error: $it", Toast.LENGTH_LONG).show()
         }
@@ -171,6 +174,7 @@ class MainActivity : ComponentActivity() {
             LauncherScreen(
                 slots = slots.value,
                 homePresses = homePresses.intValue,
+                homeReturn = homeReturn.value,
                 update = update.value,
                 download = Downloads.current.value,
                 actions = actions,
@@ -282,6 +286,18 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         // Home pressed while Mii_OS is already showing: go back to the first page.
         homePresses.intValue++
+        takeReturn(intent)
+    }
+
+    private fun takeReturn(intent: Intent?) {
+        val ms = intent?.getLongExtra(EXTRA_RETURN_MS, 0L) ?: 0L
+        intent?.removeExtra(EXTRA_RETURN_MS)
+        if (ms > 0L) homeReturn.value = homeReturn.value.first + 1 to ms
+    }
+
+    companion object {
+        /** Set by the HOME Menu's "Mii_OS Menu": the home screen plays its return for this many ms. */
+        const val EXTRA_RETURN_MS = "com.miios.launcher.RETURN_MS"
     }
 
     private fun tryStart(intent: Intent): Boolean = try {

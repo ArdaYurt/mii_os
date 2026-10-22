@@ -11,6 +11,10 @@ current version.
 - A download bar for installs and Mii_OS updates: how far the download is, then installing, then done, or why it didn't work
 - Fixed: Screen Share (and other channels installed from Mii_OS) kept saying Install after the app was installed
 
+## 0.5.1
+
+- Going home from the HOME Menu: the home screen comes out of a soft white glow and settles into place for exactly as long as the home-exit sound, so the two end together
+
 ## 0.5.0
 
 - Screen Share now uses an open-source AirPlay receiver from GitHub: no ads, no Play Store. Open Screen Share and press Install
