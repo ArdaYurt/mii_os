@@ -72,6 +72,8 @@ fun RemotePanel(focused: RemoteKey, targets: List<ButtonTarget>, progress: () ->
                     val status = when {
                         RemoteButtons.teaching == key -> "Press the ${key.title} on the remote now"
                         key in RemoteButtons.taught -> "Learned. OK to teach it again"
+                        // the Mi Box S remote sends it over its voice link, where Mii_OS can't see it
+                        key == RemoteKey.Assistant -> "May not work on this remote: OK, then press it, to try"
                         RemoteButtons.known(key) -> "Not working? OK, then press it, to teach it"
                         else -> "Press OK, then the ${key.title}, to teach it"
                     }
