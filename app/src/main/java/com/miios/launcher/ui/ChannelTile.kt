@@ -70,7 +70,6 @@ fun ChannelTile(
     val density = LocalDensity.current
     val radius = unit * 2f
     val outer = RoundedCornerShape(radius)
-    val inner = RoundedCornerShape(radius - unit * 0.3f)
 
     val scale = animateFloatAsState(if (lifted) 1.2f else if (focused) 1.12f else 1f, Motion.focusScale, label = "scale")
     val glow = animateFloatAsState(if (focused) 1f else 0f, Motion.glow, label = "glow")
@@ -127,20 +126,23 @@ fun ChannelTile(
                     drawContent()
                     drawOutline(outline, colors.focus.copy(alpha = glow.value), style = Stroke(unit.toPx() * 0.32f))
                 } else {
+                    // channels are edge to edge with no frame; only empty places keep a faint edge
                     drawContent()
-                    drawOutline(outer.createOutline(size, layoutDirection, this), colors.tileBorder, style = Stroke(unit.toPx() * 0.12f))
+                    if (slot == null || slot is Slot.Gap) {
+                        drawOutline(outer.createOutline(size, layoutDirection, this), colors.tileBorder, style = Stroke(unit.toPx() * 0.12f))
+                    }
                 }
             }
             .clip(outer)
-            .background(if (slot == null) colors.tileEmpty else colors.tileFrame),
+            .background(if (slot == null || slot is Slot.Gap) colors.tileEmpty else colors.tileFrame),
     ) {
-        if (slot == null) {
+        if (slot == null || slot is Slot.Gap) {
             EmptySlot(Modifier.fillMaxSize())
         } else if (slot is Slot.Folder) {
-            FolderArt(slot, Modifier.fillMaxSize().padding(unit * 0.3f).clip(inner))
+            FolderArt(slot, Modifier.fillMaxSize())
         } else {
             val app = (slot as Slot.App).app
-            Box(Modifier.fillMaxSize().padding(unit * 0.3f).clip(inner)) {
+            Box(Modifier.fillMaxSize()) {
                 LoadedArt(app, Modifier.fillMaxSize().notInstalled(!app.installed))
                 if (!app.installed) InstallTag(Modifier.align(Alignment.BottomEnd).padding(unit * 0.6f))
                 // sheen: a soft highlight that moves opposite to the tilt

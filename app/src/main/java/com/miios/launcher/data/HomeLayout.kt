@@ -19,8 +19,15 @@ sealed interface Slot {
         override val label get() = name
     }
 
+    /** An empty place the owner left on purpose; the channels around it stay where they are. */
+    data class Gap(val id: Int) : Slot {
+        override val key get() = GAP + id
+        override val label get() = ""
+    }
+
     companion object {
         const val FOLDER = "folder:"
+        const val GAP = "gap:"
     }
 }
 
@@ -68,7 +75,12 @@ class HomeLayout(context: Context) {
             val content = f.apps.mapNotNull { byPkg[it] }
             return Slot.Folder(id, f.name, content)
         }
+        var gaps = 0
         for (key in order()) {
+            if (key.startsWith(Slot.GAP)) {
+                slots += Slot.Gap(gaps++)
+                continue
+            }
             if (!placed.add(key)) continue
             if (key.startsWith(Slot.FOLDER)) {
                 folderSlot(key.removePrefix(Slot.FOLDER))?.let { slots += it }
@@ -79,11 +91,13 @@ class HomeLayout(context: Context) {
         // folders the order doesn't know yet, then new apps
         for (id in folders.keys) if (placed.add(Slot.FOLDER + id)) folderSlot(id)?.let { slots += it }
         for (app in apps) if (app.packageName !in inFolders && placed.add(app.packageName)) slots += Slot.App(app)
+        // an empty place left at the very end means nothing
+        while (slots.lastOrNull() is Slot.Gap) slots.removeAt(slots.size - 1)
         return slots
     }
 
-    /** Saves the order of the home screen as shown. */
-    fun saveOrder(slots: List<Slot>) = save(slots.map { it.key }, folders())
+    /** Saves the home screen as shown, empty places included. */
+    fun saveOrder(slots: List<Slot>) = save(slots.dropLastWhile { it is Slot.Gap }.map { it.key }, folders())
 
     /** Makes a folder holding [pkg], in [pkg]'s place on the home screen. Returns the new folder's id. */
     fun newFolder(slots: List<Slot>, pkg: String, name: String): String {

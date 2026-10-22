@@ -119,6 +119,11 @@ fun LauncherScreen(
     val soundVisible by remember { derivedStateOf { soundAnim.value > 0f } }
     // Move mode: a working copy of the home screen while a channel is carried around.
     var moving by remember { mutableStateOf<List<Slot>?>(null) }
+    // The home screen as it was when the move started, and where the carried channel came from.
+    // Moving swaps the channel with whatever is in the place it's over (or an empty place), so
+    // everything else stays where it was, like an Android home screen.
+    var moveBase by remember { mutableStateOf<List<Slot>>(emptyList()) }
+    var moveFrom by remember { mutableIntStateOf(-1) }
     val shown = moving ?: slots
     // The open folder, by key, and the focused channel inside it.
     var folderKey by remember { mutableStateOf<String?>(null) }
@@ -139,7 +144,8 @@ fun LauncherScreen(
     var previewTarget by remember { mutableStateOf<InstalledApp?>(null) }
     var previewReturn by remember { mutableStateOf(Zone.Grid) }
 
-    val pageCount = maxOf(1, (shown.size + PER_PAGE - 1) / PER_PAGE)
+    // while moving there's always a page more, so a channel can go to a new page
+    val pageCount = maxOf(1, (shown.size + PER_PAGE - 1) / PER_PAGE + if (moving != null) 1 else 0)
     val slots = pageCount * PER_PAGE
     LaunchedEffect(slots) { if (index >= slots) index = slots - 1 }
     val page = index.coerceAtMost(slots - 1) / PER_PAGE
@@ -231,6 +237,12 @@ fun LauncherScreen(
         renameInitial = current
         zone = Zone.Rename
     }
+    fun startMove() {
+        moveBase = shown
+        moveFrom = index
+        moving = shown
+        Sounds.play(Sfx.Select)
+    }
     fun openOptions() {
         val list = ArrayList<MenuOption>()
         val folders = shown.filterIsInstance<Slot.Folder>()
@@ -238,7 +250,7 @@ fun LauncherScreen(
             Zone.Grid -> when (val slot = shown.getOrNull(index)) {
                 is Slot.App -> {
                     optionsTitle = slot.label
-                    list += MenuOption("Move", MiiIcon.Apps) { moving = shown; Sounds.play(Sfx.Select) }
+                    list += MenuOption("Move", MiiIcon.Apps) { startMove() }
                     list += MenuOption("New folder", MiiIcon.Plus) {
                         val id = actions.newFolder(slot.app.packageName, "New folder")
                         startRename(id, "New folder")
@@ -248,11 +260,11 @@ fun LauncherScreen(
                 }
                 is Slot.Folder -> {
                     optionsTitle = slot.name
-                    list += MenuOption("Move", MiiIcon.Apps) { moving = shown; Sounds.play(Sfx.Select) }
+                    list += MenuOption("Move", MiiIcon.Apps) { startMove() }
                     list += MenuOption("Rename", MiiIcon.Sliders) { startRename(slot.id, slot.name) }
                     list += MenuOption("Remove folder", MiiIcon.Back) { actions.deleteFolder(slot.id) }
                 }
-                null -> return
+                is Slot.Gap, null -> return
             }
             Zone.Folder -> {
                 val folder = openFolder ?: return
@@ -400,10 +412,16 @@ fun LauncherScreen(
                         nr >= 0 -> index += dy * COLS
                     }
                 }
-                if (carried != null) {
-                    // carry the channel: it swaps places as it moves, and can't go past the last one
-                    if (index >= carried.size) index = old
-                    if (index != old) moving = carried.toMutableList().apply { add(index, removeAt(old)) }
+                if (carried != null && index != old) {
+                    // carry the channel over any place, empty ones too: it trades places with
+                    // whatever was there when the move began
+                    val next = moveBase.toMutableList()
+                    var gaps = next.count { it is Slot.Gap }
+                    while (next.size <= index) next += Slot.Gap(1000 + gaps++)
+                    val carriedSlot = next[moveFrom]
+                    next[moveFrom] = next[index]
+                    next[index] = carriedSlot
+                    moving = next
                 }
             }
         }
@@ -425,7 +443,7 @@ fun LauncherScreen(
             Zone.Grid -> if (moving != null) dropMoving() else when (val slot = shown.getOrNull(index)) {
                 is Slot.App -> openPreview(slot.app, Zone.Grid)
                 is Slot.Folder -> showFolder(slot.key)
-                null -> Unit
+                is Slot.Gap, null -> Unit
             }
             Zone.Folder -> openFolder?.apps?.getOrNull(folderIndex)?.let { openPreview(it, Zone.Folder) }
             Zone.Options -> {
@@ -604,7 +622,7 @@ fun LauncherScreen(
             val homeMenuOn = com.miios.launcher.service.HomeButtonService.on
             Label(
                 when {
-                    moving != null -> "Moving: use the arrows, then press OK to put it down"
+                    moving != null -> "Moving: put it in any place with the arrows, then press OK"
                     !homeMenuOn && tip % 2 == 1 -> "Turn on the HOME Menu in Settings › HOME Menu"
                     else -> "Hold OK, or choose Options, to move a channel or make a folder"
                 },
