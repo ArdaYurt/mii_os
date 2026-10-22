@@ -6,6 +6,11 @@ here, at the top, in the same pull request: the first bullets are what the pop-u
 biggest change first. Pull requests that don't change `VERSION` still reach the box as builds of the
 current version.
 
+## 0.5.2
+
+- A download bar for installs and Mii_OS updates: how far the download is, then installing, then done, or why it didn't work
+- Fixed: Screen Share (and other channels installed from Mii_OS) kept saying Install after the app was installed
+
 ## 0.5.1
 
 - Going home from the HOME Menu: the home screen comes out of a soft white glow and settles into place for exactly as long as the home-exit sound, so the two end together

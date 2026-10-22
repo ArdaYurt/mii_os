@@ -120,7 +120,12 @@ fun ChannelPreview(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     PillButton("Options", MiiIcon.Sliders, focused == PreviewButton.Menu)
-                    PillButton(if (app.installed) "Start" else "Install", if (app.installed) MiiIcon.PlayCircle else MiiIcon.Download, focused == PreviewButton.Start)
+                    val busy = !app.installed && com.miios.launcher.update.Downloads.activeFor(app.packageName) != null
+                    PillButton(
+                        when { app.installed -> "Start"; busy -> "Installing…"; else -> "Install" },
+                        if (app.installed) MiiIcon.PlayCircle else MiiIcon.Download,
+                        focused == PreviewButton.Start,
+                    )
                 }
             }
         }

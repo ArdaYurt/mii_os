@@ -26,7 +26,10 @@ import com.miios.launcher.ui.LauncherActions
 import com.miios.launcher.ui.LauncherScreen
 import com.miios.launcher.ui.SettingsItem
 import com.miios.launcher.ui.UpdateState
+import com.miios.launcher.update.Downloads
 import com.miios.launcher.update.Updater
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -48,7 +51,8 @@ class MainActivity : ComponentActivity() {
 
     private val actions = object : LauncherActions {
         override fun launch(app: InstalledApp) {
-            val intent = app.launchIntent
+            // the screen may still hold the channel from before its app was installed
+            val intent = app.launchIntent ?: apps.value.firstOrNull { it.packageName == app.packageName }?.launchIntent
             if (intent != null) start(intent) else install(app.packageName)
         }
 
@@ -82,17 +86,10 @@ class MainActivity : ComponentActivity() {
         override fun installUpdate() {
             val available = update.value as? UpdateState.Available ?: return
             if (!Updater.canInstall(this@MainActivity)) return
-            update.value = UpdateState.Downloading(-1f)
-            lifecycleScope.launch {
-                try {
-                    Updater.install(this@MainActivity) { p -> runOnUiThread { update.value = UpdateState.Downloading(p) } }
-                } catch (e: Exception) {
-                    Toast.makeText(this@MainActivity, "Couldn't download the update. Try again later.", Toast.LENGTH_LONG).show()
-                    dismissedUpdate = available.version
-                }
-                // Android's installer takes over from here; it asks before installing.
-                update.value = UpdateState.None
-            }
+            // the prompt closes; the download bar shows the rest, and Android's installer asks first
+            dismissedUpdate = available.version
+            update.value = UpdateState.None
+            lifecycleScope.launch { Updater.install(this@MainActivity, available.name) }
         }
 
         override fun dismissUpdate() {
@@ -140,28 +137,15 @@ class MainActivity : ComponentActivity() {
         if (pkg == ChannelStyles.SCREEN_SHARE) installScreenShare() else openStore(pkg)
     }
 
-    private var screenShareDownloading = false
-
     /**
      * Downloads the open-source AirPlay receiver from its developer's GitHub releases and installs it;
-     * Android's installer asks first. No Play Store, no account.
+     * Android's installer asks first. No Play Store, no account. The download bar shows how it goes.
      */
     private fun installScreenShare() {
-        if (screenShareDownloading) return
+        if (Downloads.activeFor(ChannelStyles.SCREEN_SHARE) != null) return
         if (!Updater.canInstall(this, retry = "choose Install again")) return
-        screenShareDownloading = true
-        Toast.makeText(this, "Downloading the AirPlay receiver from GitHub…", Toast.LENGTH_LONG).show()
         lifecycleScope.launch {
-            try {
-                Updater.installFrom(this@MainActivity, java.net.URL(SCREEN_SHARE_APK), ChannelStyles.SCREEN_SHARE) {}
-            } catch (e: Exception) {
-                Toast.makeText(
-                    this@MainActivity,
-                    "Couldn't download the AirPlay receiver. Check the internet connection and try again.",
-                    Toast.LENGTH_LONG,
-                ).show()
-            }
-            screenShareDownloading = false
+            Updater.installFrom(this@MainActivity, java.net.URL(SCREEN_SHARE_APK), ChannelStyles.SCREEN_SHARE, "AirPlay Receiver")
         }
     }
 
@@ -180,12 +164,19 @@ class MainActivity : ComponentActivity() {
         CrashLog.takeLast(this)?.let {
             Toast.makeText(this, "Mii_OS restarted after an error: $it", Toast.LENGTH_LONG).show()
         }
+        // An install can finish after Mii_OS is back in front: show the new channel as soon as it does.
+        lifecycleScope.launch {
+            snapshotFlow { Downloads.current.value?.stage }
+                .filter { it == Downloads.Stage.Done }
+                .collect { reloadApps() }
+        }
         setContent {
             LauncherScreen(
                 slots = slots.value,
                 homePresses = homePresses.intValue,
                 homeReturn = homeReturn.value,
                 update = update.value,
+                download = Downloads.current.value,
                 actions = actions,
             )
         }
@@ -246,11 +237,7 @@ class MainActivity : ComponentActivity() {
         ChannelArtLoader.refresh(this)
         // Refresh in the background on every return so newly installed apps appear without a restart.
         lifecycleScope.launch {
-            val loaded = withContext(Dispatchers.IO) { AppRepository.load(this@MainActivity) }
-            if (loaded.map { it.packageName } != apps.value.map { it.packageName }) {
-                apps.value = loaded
-                rearrange()
-            }
+            reloadApps()
         }
         checkForUpdate(force = false)
     }
@@ -269,6 +256,19 @@ class MainActivity : ComponentActivity() {
             if ((force || newer.code != dismissedUpdate) && update.value is UpdateState.None) {
                 update.value = UpdateState.Available(newer.code, newer.name, newer.notes)
             }
+        }
+    }
+
+    /**
+     * Reloads the installed apps. A favourite channel keeps its package name when it's installed,
+     * so whether each one is installed counts as a change too: that's what turns Install into Start.
+     */
+    private suspend fun reloadApps() {
+        val loaded = withContext(Dispatchers.IO) { AppRepository.load(this@MainActivity) }
+        fun shape(list: List<InstalledApp>) = list.map { it.packageName to it.installed }
+        if (shape(loaded) != shape(apps.value)) {
+            apps.value = loaded
+            rearrange()
         }
     }
 
