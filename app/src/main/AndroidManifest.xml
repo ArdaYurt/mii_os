@@ -64,6 +64,12 @@
             android:name=".update.InstallResultReceiver"
             android:exported="false" />
 
+        <!-- Only adb's shell user may write through it; see PackProvider. -->
+        <provider
+            android:name=".storage.PackProvider"
+            android:authorities="com.miios.launcher.packs"
+            android:exported="true" />
+
         <service
             android:name=".service.HomeButtonService"
             android:exported="true"

@@ -189,16 +189,19 @@ class MainActivity : ComponentActivity() {
         requestPermissions(arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE), 1)
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         Sounds.load(this)
         ChannelArtLoader.refresh(this)
+        com.miios.launcher.ui.HandImage.refresh(this)
     }
 
     override fun onResume() {
         super.onResume()
         HomeButtonService.refresh(this)
         askForPackAccess()
+        com.miios.launcher.ui.MiiFont.refresh(this)
+        com.miios.launcher.ui.HandImage.refresh(this)
         // picks up a sound pack copied over while Mii_OS was in the background
         Sounds.load(this)
         Music.play(this)

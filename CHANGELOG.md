@@ -13,7 +13,8 @@ current version.
 - Options on every channel: move it, make folders, app info
 - Settings › HOME Menu, to switch the HOME Menu on (works on Google TV's settings too)
 - Screen Share channel for iPhone and iPad (AirScreen)
-- Your own logos and sounds, copied from the laptop to the Mii_OS folder on the box
+- Your own logos, sounds, font and pointer, copied from the laptop
+- HOME Menu: the app stays visible behind it, blurred and dimmed; bigger, clearer buttons
 - Fixed: the update pop-up looping on "Install unknown apps"
 - Version numbers, with these notes in the update pop-up
 

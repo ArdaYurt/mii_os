@@ -117,7 +117,8 @@ alone. Steps are in [`tools/speedup/README.md`](tools/speedup/README.md).
 ### HOME Menu
 
 Press Home inside any app and the HOME Menu opens over it, as on the Wii. Press Home again or OK on
-**Mii_OS Menu** to go to the home screen; Back (or **Close**) returns to the app. It needs the
+**Mii_OS Menu** to go to the home screen; Back (or **Close**) returns to the app. The app stays
+visible behind it, softly blurred and dimmed. It needs the
 *Mii_OS Home button* accessibility service. To turn it on, open **Settings › HOME Menu** in Mii_OS:
 it takes you to the box's Accessibility settings, where you choose *Mii_OS Home button* and switch
 it on (Android only lets the box's owner do that). The speed-up script can also turn it on.
@@ -156,6 +157,19 @@ or any app's name in lowercase with dashes (`Pluto TV` → `pluto-tv.png`). Put 
 It copies them to `/sdcard/Mii_OS/logos` on the box and lets Mii_OS read that folder. They go to
 your box only; `reset-logos.bat` brings back Mii_OS's art. Sound packs work the same way, in
 `/sdcard/Mii_OS/sounds`.
+
+### Your own font and pointer
+
+Mii_OS can use your own font and your own hand pointer instead of its own; they're your files and
+stay on your box.
+
+- **Font:** put one `.ttf` or `.otf` file in `tools/font/my-font` and double-click
+  [`tools/font/push-font.bat`](tools/font/push-font.bat). All of Mii_OS's text uses it, the HOME Menu
+  included. `reset-font.bat` goes back to the box's font.
+- **Pointer:** put a `hand.png` in `tools/cursor/my-cursor` (transparent background, about 256 pixels
+  wide, pointing up with the fingertip touching the top edge a little left of centre) and
+  double-click [`tools/cursor/push-cursor.bat`](tools/cursor/push-cursor.bat). `reset-cursor.bat`
+  brings back Mii_OS's hand.
 
 ## Design and speed
 
