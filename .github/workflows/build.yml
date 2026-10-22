@@ -26,17 +26,34 @@ jobs:
       - name: Restore signing key
         env:
           KEYSTORE_BASE64: ${{ secrets.MII_KEYSTORE_BASE64 }}
+          MII_KEYSTORE_PASSWORD: ${{ secrets.MII_KEYSTORE_PASSWORD }}
+          MII_KEY_ALIAS: ${{ secrets.MII_KEY_ALIAS }}
         # Only main's builds are installed, so only they need the permanent key; pull requests
         # build with the debug key and can't be broken by a key problem.
         if: env.KEYSTORE_BASE64 != '' && github.event_name != 'pull_request'
         run: |
           echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/mii.jks"
           echo "MII_KEYSTORE_PATH=$RUNNER_TEMP/mii.jks" >> "$GITHUB_ENV"
+          # Check the key opens before the build, and use whatever alias it was made with.
+          # Prints only alias names and types, never a password.
+          if ! keytool -list -keystore "$RUNNER_TEMP/mii.jks" -storepass "$MII_KEYSTORE_PASSWORD" > "$RUNNER_TEMP/keys.txt" 2>&1; then
+            echo "::error title=Signing key::keytool could not open the keystore: $(head -c 300 "$RUNNER_TEMP/keys.txt" | tr '\n' ' ')"
+            echo "::error title=Signing key::Keystore file is $(wc -c < "$RUNNER_TEMP/mii.jks") bytes, starts with $(head -c 4 "$RUNNER_TEMP/mii.jks" | od -An -tx1 | tr -d ' '); password is ${#MII_KEYSTORE_PASSWORD} characters."
+            exit 1
+          fi
+          echo "::notice title=Signing key::$(grep -iE 'PrivateKeyEntry|Keystore type|Your keystore contains' "$RUNNER_TEMP/keys.txt" | tr '\n' ' ')"
+          if [ -z "$MII_KEY_ALIAS" ]; then
+            alias=$(grep -i "PrivateKeyEntry" "$RUNNER_TEMP/keys.txt" | head -1 | cut -d, -f1)
+            if [ -z "$alias" ]; then
+              echo "::error title=Signing key::The keystore has no private key. Run tools/signing/make-key.bat again with a new folder."
+              exit 1
+            fi
+            echo "MII_KEY_ALIAS=$alias" >> "$GITHUB_ENV"
+          fi
 
       - name: Build release APK
         env:
           MII_KEYSTORE_PASSWORD: ${{ secrets.MII_KEYSTORE_PASSWORD }}
-          MII_KEY_ALIAS: ${{ secrets.MII_KEY_ALIAS }}
           MII_KEY_PASSWORD: ${{ secrets.MII_KEY_PASSWORD }}
           # Starts above the hand-numbered first builds; the in-app updater compares these.
           MII_VERSION_CODE: ${{ github.run_number }}0
