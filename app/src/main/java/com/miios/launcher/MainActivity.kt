@@ -15,7 +15,9 @@ import com.miios.launcher.data.AppRepository
 import com.miios.launcher.data.HomeLayout
 import com.miios.launcher.data.InstalledApp
 import com.miios.launcher.data.Slot
+import com.miios.launcher.sound.Music
 import com.miios.launcher.sound.Sounds
+import com.miios.launcher.art.ChannelArtLoader
 import com.miios.launcher.art.ChannelStyles
 import com.miios.launcher.tv.TvActivity
 import com.miios.launcher.ui.LauncherActions
@@ -54,13 +56,14 @@ class MainActivity : ComponentActivity() {
 
         override fun openSystemSetting(item: SettingsItem) {
             if (item == SettingsItem.Updates) return checkForUpdate(force = true)
+
             val action = when (item) {
                 SettingsItem.Network -> Settings.ACTION_WIFI_SETTINGS
                 SettingsItem.Display -> Settings.ACTION_DISPLAY_SETTINGS
                 SettingsItem.Apps -> Settings.ACTION_APPLICATION_SETTINGS
                 SettingsItem.DateTime -> Settings.ACTION_DATE_SETTINGS
                 SettingsItem.System -> Settings.ACTION_SETTINGS
-                SettingsItem.Updates -> return
+                SettingsItem.Updates, SettingsItem.Sounds -> return
             }
             // Google TV doesn't have every settings page; fall back to the main one.
             val intent = Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -151,6 +154,8 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         // picks up a sound pack copied over while Mii_OS was in the background
         Sounds.load(this)
+        Music.play(this)
+        ChannelArtLoader.refresh(this)
         // Refresh in the background on every return so newly installed apps appear without a restart.
         lifecycleScope.launch {
             val loaded = withContext(Dispatchers.IO) { AppRepository.load(this@MainActivity) }
@@ -177,6 +182,11 @@ class MainActivity : ComponentActivity() {
     /** Rebuilds the home screen from the installed apps and the saved arrangement. */
     private fun rearrange() {
         slots.value = layout.arrange(apps.value)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Music.fadeOut()
     }
 
     override fun onNewIntent(intent: Intent) {

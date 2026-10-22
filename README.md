@@ -124,10 +124,23 @@ the moment they play, then double-click [`tools/sounds/push-sounds.bat`](tools/s
 | `page` | turning the page of channels |
 | `home` | the HOME Menu opens |
 | `notice` | a message such as "update available" |
+| `music` | the home-screen music (it loops) |
 
 Any of `.mp3`, `.ogg`, `.wav`, `.m4a` or `.flac` works, and you can replace just some of them. The
 files are copied to your box only and are never added to this repository. `reset-sounds.bat` puts
 Mii_OS's own sounds back.
+
+Mii_OS also plays its own calm menu music on the home screen, fading out when an app starts.
+*Settings › Sounds* turns the clicks and the music on or off and sets each one's volume.
+
+### Your own logos
+
+To replace a channel's art with your own image, make it 16:9 (3840×2160 is ideal; 1920×1080 also
+looks sharp) as PNG, WebP or JPG, and name it after the channel: `apple-tv`, `youtube`, `plex`,
+`prime-video`, `stremio`, `screen-share`, `tv`, `disney-plus`, `mubi`, `hbo-max`, `spotify`, `kick`,
+or any app's name in lowercase with dashes (`Pluto TV` → `pluto-tv.png`). Put the images in
+`tools/logos/my-logos` and double-click [`tools/logos/push-logos.bat`](tools/logos/push-logos.bat).
+They go to your box only; `reset-logos.bat` brings back Mii_OS's art.
 
 ## Design and speed
 

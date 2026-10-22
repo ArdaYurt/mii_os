@@ -29,6 +29,7 @@ enum class SettingsItem(val title: String, val detail: String, val icon: MiiIcon
     Display("Display & Sound", "Resolution, HDR, audio output", MiiIcon.Display),
     Apps("Apps", "Storage, updates, uninstall", MiiIcon.Apps),
     DateTime("Date & Time", "Clock and time zone", MiiIcon.Clock),
+    Sounds("Sounds", "Clicks and chimes", MiiIcon.PlayCircle),
     Updates("Mii_OS Update", "Check for a new version", MiiIcon.Download),
     System("All Settings", "Everything else on the box", MiiIcon.Sliders),
 }
@@ -69,7 +70,10 @@ fun SettingsMenu(focused: Int, progress: () -> Float) {
                 Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(unit * 3f)) {
                     for ((col, item) in row.value.withIndex()) {
                         val i = row.index * SETTINGS_COLS + col
-                        SettingsButton(item.icon, item.title, item.detail, i == focused, Modifier.weight(1f).fillMaxHeight())
+                        val detail = if (item == SettingsItem.Sounds) {
+                            if (com.miios.launcher.sound.Sounds.enabled) "On: press to turn off" else "Off: press to turn on"
+                        } else item.detail
+                        SettingsButton(item.icon, item.title, detail, i == focused, Modifier.weight(1f).fillMaxHeight())
                     }
                 }
             }

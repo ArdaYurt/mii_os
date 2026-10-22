@@ -63,6 +63,23 @@ object ChannelStyles {
         "kick" to KICK,
     )
 
+    /** Short names a logo pack can use for a channel, besides its package name and app name. */
+    private val aliases = mapOf(
+        APPLE_TV to listOf("apple-tv", "appletv"),
+        YOUTUBE to listOf("youtube"),
+        PLEX to listOf("plex"),
+        PRIME_VIDEO to listOf("prime-video", "prime"),
+        STREMIO to listOf("stremio"),
+        AIRSCREEN to listOf("screen-share", "airscreen"),
+        TV to listOf("tv"),
+        DISNEY_PLUS to listOf("disney-plus", "disney"),
+        MUBI to listOf("mubi"),
+        MAX to listOf("hbo-max", "max"),
+        SPOTIFY to listOf("spotify"),
+    )
+
+    fun aliasesFor(pkg: String): List<String> = aliases[pkg].orEmpty()
+
     fun forPackage(pkg: String): ChannelStyle? = styles[pkg]
 
     fun forApp(pkg: String, label: String): ChannelStyle? =

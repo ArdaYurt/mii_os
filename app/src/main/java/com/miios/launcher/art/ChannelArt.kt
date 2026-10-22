@@ -11,7 +11,11 @@ import androidx.core.graphics.drawable.toBitmap
 import com.miios.launcher.data.InstalledApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.io.IOException
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 
 sealed interface ChannelArt {
     /** Art that fills the whole tile: an art-pack image or the app's banner. */
@@ -44,11 +48,52 @@ object ChannelArtLoader {
 
     fun cached(app: InstalledApp, width: Int, height: Int): ChannelArt? = cache.get(key(app, width, height))
 
+    /** Bumped when the logo pack changes, so every tile loads its art again. */
+    var version by mutableIntStateOf(0)
+        private set
+    private var packStamp = -1L
+
+    /**
+     * Logo pack: the owner's own images in Android/data/com.miios.launcher/files/logos, named after
+     * the channel (plex.png, apple-tv.png, prime-video.png...) or the app's package name. They stay
+     * on the box; tools/logos/push-logos.bat copies them from a laptop.
+     */
+    fun logoFolder(context: Context): File = File(context.getExternalFilesDir(null), "logos")
+
+    /** Notices a changed logo pack (called on resume). */
+    fun refresh(context: Context) {
+        val dir = logoFolder(context).apply { mkdirs() }
+        val stamp = dir.listFiles()?.sumOf { it.lastModified() + it.length() } ?: 0L
+        if (packStamp != -1L && stamp != packStamp) {
+            cache.evictAll()
+            version++
+        }
+        packStamp = stamp
+    }
+
+    private val imageTypes = listOf("png", "webp", "jpg", "jpeg")
+
+    private fun fromLogoPack(context: Context, app: InstalledApp, width: Int, height: Int): ChannelArt? {
+        val dir = logoFolder(context)
+        val names = listOf(app.packageName) + ChannelStyles.aliasesFor(app.packageName) + slug(app.label)
+        val file = names.flatMap { n -> imageTypes.map { File(dir, "$n.$it") } }.firstOrNull { it.isFile } ?: return null
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.path, bounds)
+        var sample = 1
+        while (bounds.outWidth / (sample * 2) >= width && bounds.outHeight / (sample * 2) >= height) sample *= 2
+        val bitmap = BitmapFactory.decodeFile(file.path, BitmapFactory.Options().apply { inSampleSize = sample }) ?: return null
+        return ChannelArt.FullBleed(bitmap.asImageBitmap())
+    }
+
+    /** "Prime Video" -> "prime-video", "Disney+" -> "disney" */
+    private fun slug(label: String) = label.lowercase().replace(Regex("[^a-z0-9]+"), "-").trim('-')
+
     suspend fun load(context: Context, app: InstalledApp, width: Int, height: Int): ChannelArt {
         val key = key(app, width, height)
         cache.get(key)?.let { return it }
         return withContext(Dispatchers.IO) {
-            val art = fromArtPack(context, app.packageName, width, height)
+            val art = runCatching { fromLogoPack(context, app, width, height) }.getOrNull()
+                ?: fromArtPack(context, app.packageName, width, height)
                 ?: ChannelStyles.forApp(app.packageName, app.label)?.let { ChannelArt.Styled(it) }
                 ?: app.banner?.let { ChannelArt.FullBleed(it.toBitmap(width, height, Bitmap.Config.ARGB_8888).asImageBitmap()) }
                 ?: iconArt(app, height)

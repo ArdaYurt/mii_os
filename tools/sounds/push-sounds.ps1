@@ -8,6 +8,7 @@
 #   page     turning the page of channels
 #   home     the HOME Menu opening
 #   notice   a message, like "update available"
+#   music    the home-screen music (it loops)
 # Any of .mp3 .ogg .wav .m4a .flac works (for example: move.wav, launch.mp3). Leave a sound out to
 # keep Mii_OS's own. The files go to your box only; nothing is uploaded anywhere.
 
@@ -31,7 +32,7 @@ if (-not (Test-Path $pack) -and -not ($args -contains "-reset")) {
 }
 
 $reset = $args -contains "-reset"
-$names = "move", "select", "back", "launch", "page", "home", "notice"
+$names = "move", "select", "back", "launch", "page", "home", "notice", "music"
 $files = Get-ChildItem $pack -File | Where-Object { $names -contains $_.BaseName.ToLower() -and $_.Extension -match '^\.(mp3|ogg|wav|m4a|flac)$' }
 if (-not $files -and -not $reset) { throw "No sound files with the right names in $pack." }
 

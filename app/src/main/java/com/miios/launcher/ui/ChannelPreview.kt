@@ -61,7 +61,7 @@ fun ChannelPreview(
     val context = LocalContext.current
     var art by remember(app.packageName) { mutableStateOf<ChannelArt?>(null) }
     // Full-resolution art is only ever decoded here, for the one channel being previewed.
-    LaunchedEffect(app.packageName) { art = ChannelArtLoader.load(context, app, screen.width, screen.height) }
+    LaunchedEffect(app.packageName, ChannelArtLoader.version) { art = ChannelArtLoader.load(context, app, screen.width, screen.height) }
 
     val hero: @Composable () -> Unit = {
         ChannelArtView(art, app.label, Modifier.fillMaxSize().notInstalled(!app.installed))
