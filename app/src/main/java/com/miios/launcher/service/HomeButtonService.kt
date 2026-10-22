@@ -34,6 +34,7 @@ class HomeButtonService : AccessibilityService() {
         super.onServiceConnected()
         menu = HomeMenu(this)
         Sounds.load(this)
+        RemoteButtons.load(this)
     }
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
@@ -55,6 +56,16 @@ class HomeButtonService : AccessibilityService() {
                 KeyEvent.KEYCODE_DPAD_LEFT -> move(-1)
                 KeyEvent.KEYCODE_DPAD_RIGHT -> move(1)
             }
+            return true
+        }
+        // Settings › Remote buttons is waiting for a button to learn.
+        if (RemoteButtons.learn(event)) {
+            if (up) Sounds.play(Sfx.Select)
+            return true
+        }
+        RemoteButtons.keyFor(event)?.let { key ->
+            // Started on the press, not the release, so it feels instant; held buttons don't repeat it.
+            if (!up && event.repeatCount == 0) RemoteButtons.targets[key]?.let(::openTarget)
             return true
         }
         if (event.keyCode != KeyEvent.KEYCODE_HOME) return false
@@ -125,6 +136,16 @@ class HomeButtonService : AccessibilityService() {
                     Intent.FLAG_ACTIVITY_SINGLE_TOP,
             ).putExtra(MainActivity.EXTRA_RETURN_MS, returnMs),
         )
+    }
+
+    private fun openTarget(target: String) {
+        val intent = RemoteButtons.intentFor(this, target) ?: return
+        Sounds.play(Sfx.Launch)
+        try {
+            startActivity(intent)
+        } catch (e: Exception) {
+            // uninstalled since it was chosen: the button does nothing rather than crash the service
+        }
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
