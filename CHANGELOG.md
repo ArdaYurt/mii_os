@@ -6,6 +6,10 @@ here, at the top, in the same pull request: the first bullets are what the pop-u
 biggest change first. Pull requests that don't change `VERSION` still reach the box as builds of the
 current version.
 
+## 0.6.4
+
+- Nuvio's Install button works: Nuvio now downloads from its developer's GitHub, like Plezy, because the Play Store said "Item not found" on the Mi Box S
+
 ## 0.6.3
 
 - Nuvio, an open-source alternative to Stremio that's lighter on the box, has its own channel next to Stremio's: open it and press Install to get it from the Play Store. It plays the same add-ons; add them in Nuvio's Settings › Addons
