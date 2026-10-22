@@ -109,7 +109,7 @@ alone. Steps are in [`tools/speedup/README.md`](tools/speedup/README.md).
 |---|---|
 | ← ↑ → ↓ | Move between channels; the hand follows. Going past the right or left edge turns the page; the arrows at the screen's edges show when there's another page. |
 | Down from the bottom row | Reach the dock: **Settings** opens the Mii_OS Settings screen, **Share** opens the Screen Share channel (AirScreen, for iPhone/iPad screen sharing). |
-| OK | The channel grows into its channel screen. **Start** launches the app, **Options** moves it, puts it in a folder or shows its app info. |
+| OK | The channel grows into its channel screen (known channels open on their own colours, their name drifting behind the logo). **Start** launches the app, **Options** moves it, puts it in a folder or shows its app info. |
 | Hold OK (or the menu button) | Options for that channel: **Move** it (the arrows carry it to any place, empty ones too, trading places with whatever is there; OK puts it down), make a **New folder**, or **Add to** an existing folder. On a folder: move, rename or remove it. Inside a folder: move a channel back out. |
 | Back | Close the channel screen, folder or menu. |
 | Home | Return to the first page. |

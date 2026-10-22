@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -108,7 +109,7 @@ fun HandPointer(target: PointerTarget, show: Boolean) {
     val w = unit * 4.2f
     val own = HandImage.bitmap
     // the fingertip: on the drawn hand it's known; on your own image it's near the top, left of centre
-    val tipX = if (own != null) HandImage.TIP_X else 0.36f
+    val tipX = if (own != null) HandImage.TIP_X else 0.455f
     val tipY = if (own != null) HandImage.TIP_Y else 0.03f
     Canvas(
         Modifier
@@ -118,7 +119,7 @@ fun HandPointer(target: PointerTarget, show: Boolean) {
                 // the fingertip sits on the target point
                 translationX = pos.x - size.width * tipX
                 translationY = pos.y - size.height * tipY
-                rotationZ = (if (own != null) 0f else -14f) + tip * 10f
+                rotationZ = (if (own != null) 0f else -6f) + tip * 10f
                 scaleX = press.value
                 scaleY = press.value
                 transformOrigin = androidx.compose.ui.graphics.TransformOrigin(tipX, tipY)
@@ -156,44 +157,52 @@ object HandImage {
     }
 }
 
-/** An original pointing glove: white, outlined in soft blue, with a cuff and a drop shadow. */
+/**
+ * An original pointing hand in the Wii's manner: a plump white hand pointing straight up, thumb
+ * out to the side, the other fingers curled, outlined in soft charcoal and shaded toward its
+ * lower right. For an exact copy of the Wii's own hand, use the cursor pack (hand.png).
+ */
 private fun DrawScope.drawHand() {
-    val outline = Color(0xFF3A9BD6)
-    val crease = Color(0xFFBFD4E2)
+    val outline = Color(0xFF4B5058)
+    val crease = Color(0xFFB9C1CA)
     // drawn on a 100 × 130 grid, scaled to the canvas
     scale(size.width / 100f, size.width / 100f, pivot = Offset.Zero) {
         val shapes = listOf(
-            // index finger
-            roundRect(30f, 3f, 17f, 60f, 8.5f),
-            // middle, ring and little finger, curled
-            roundRect(46f, 42f, 15f, 26f, 7.5f),
-            roundRect(59f, 46f, 14f, 24f, 7f),
-            roundRect(71f, 52f, 12f, 21f, 6f),
-            // palm
-            roundRect(22f, 50f, 61f, 62f, 18f),
-            // thumb, folded across
+            // index finger, straight up
+            roundRect(36f, 2f, 19f, 62f, 9.5f),
+            // middle, ring and little finger, curled into knuckles
+            roundRect(52f, 40f, 17f, 27f, 8.5f),
+            roundRect(65f, 45f, 15f, 25f, 7.5f),
+            roundRect(76f, 52f, 12f, 21f, 6f),
+            // palm, rounded off at the wrist
+            roundRect(31f, 48f, 56f, 64f, 22f),
+            // thumb, out to the side and up
             Path().apply {
-                moveTo(24f, 66f)
-                cubicTo(14f, 60f, 4f, 64f, 6f, 72f)
-                cubicTo(8f, 80f, 20f, 86f, 30f, 88f)
+                moveTo(37f, 63f)
+                cubicTo(27f, 57f, 17f, 48f, 11f, 51f)
+                cubicTo(4f, 55f, 7f, 64f, 13f, 68f)
+                cubicTo(21f, 74f, 30f, 79f, 37f, 82f)
                 close()
             },
-            // cuff
-            roundRect(28f, 104f, 48f, 22f, 7f),
         )
-        translate(2.4f, 3.4f) {
-            for (p in shapes) drawPath(p, Color.Black.copy(alpha = 0.16f))
+        translate(3f, 4f) {
+            for (p in shapes) drawPath(p, Color.Black.copy(alpha = 0.18f), style = Stroke(width = 6f, join = StrokeJoin.Round))
+            for (p in shapes) drawPath(p, Color.Black.copy(alpha = 0.18f))
         }
-        for (p in shapes) drawPath(p, outline, style = Stroke(width = 7f, join = StrokeJoin.Round))
-        val fill = Brush.verticalGradient(listOf(Color.White, Color(0xFFEFF4F8)), startY = 0f, endY = 130f)
+        for (p in shapes) drawPath(p, outline, style = Stroke(width = 6f, join = StrokeJoin.Round))
+        // white at the top left, a soft grey toward the lower right, like the Wii's shaded glove
+        val fill = Brush.linearGradient(
+            0f to Color.White, 0.55f to Color(0xFFF7F9FB), 1f to Color(0xFFD9E0E7),
+            start = Offset(20f, 10f), end = Offset(90f, 120f),
+        )
         for (p in shapes) drawPath(p, fill)
-        // knuckle creases and the cuff seam
-        drawLine(crease, Offset(47f, 60f), Offset(47f, 68f), 2.2f)
-        drawLine(crease, Offset(60f, 62f), Offset(60f, 70f), 2.2f)
-        drawLine(crease, Offset(72f, 65f), Offset(72f, 72f), 2.2f)
-        drawLine(crease, Offset(31f, 110f), Offset(74f, 110f), 2.2f)
-        // a highlight down the finger
-        drawRoundRect(Color.White, topLeft = Offset(34f, 9f), size = Size(4f, 22f), cornerRadius = CornerRadius(2f))
+        // where the fingers and thumb meet the palm
+        drawLine(crease, Offset(54f, 58f), Offset(54f, 67f), 2.4f, StrokeCap.Round)
+        drawLine(crease, Offset(67f, 62f), Offset(67f, 70f), 2.4f, StrokeCap.Round)
+        drawLine(crease, Offset(78f, 66f), Offset(78f, 72f), 2.4f, StrokeCap.Round)
+        drawLine(crease, Offset(33f, 66f), Offset(38f, 76f), 2.4f, StrokeCap.Round)
+        // a gloss down the finger
+        drawRoundRect(Color.White, topLeft = Offset(40f, 8f), size = Size(4.5f, 24f), cornerRadius = CornerRadius(2.25f))
     }
 }
 

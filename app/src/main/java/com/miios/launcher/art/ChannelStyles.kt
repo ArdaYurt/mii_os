@@ -13,6 +13,9 @@ data class ChannelStyle(
     val icon: MiiIcon,
     /** One line shown on the channel screen, for channels that need explaining (Screen Share). */
     val blurb: String? = null,
+    /** The channel screen's colours, when they differ from the tile's (Spotify's screen is green). */
+    val stageTop: Color = top,
+    val stageBottom: Color = bottom,
 )
 
 object ChannelStyles {
@@ -31,7 +34,10 @@ object ChannelStyles {
     private val styles = mapOf(
         APPLE_TV to ChannelStyle("Apple TV", Color(0xFF4A4A4E), Color(0xFF111113), Color.White, MiiIcon.Display),
         YOUTUBE to ChannelStyle("YouTube", Color(0xFFFF4545), Color(0xFFCC0000), Color.White, MiiIcon.Play),
-        PLEX to ChannelStyle("Plex", Color(0xFF3A3D42), Color(0xFF1A1C1F), Color(0xFFEBAF00), MiiIcon.Chevron),
+        PLEX to ChannelStyle(
+            "Plex", Color(0xFF3A3D42), Color(0xFF1A1C1F), Color(0xFFEBAF00), MiiIcon.Chevron,
+            stageTop = Color(0xFFF5BE1A), stageBottom = Color(0xFFB07F00),
+        ),
         PRIME_VIDEO to ChannelStyle("Prime Video", Color(0xFF3CC0F0), Color(0xFF0A68A0), Color.White, MiiIcon.PlayCircle),
         STREMIO to ChannelStyle("Stremio", Color(0xFF8A6CF7), Color(0xFF4325B0), Color.White, MiiIcon.Film),
         AIRSCREEN to ChannelStyle(
@@ -43,8 +49,14 @@ object ChannelStyles {
         DISNEY_PLUS to ChannelStyle("Disney+", Color(0xFF1F3E8C), Color(0xFF0B1A40), Color.White, MiiIcon.Plus),
         MUBI to ChannelStyle("MUBI", Color(0xFF2A2A2E), Color(0xFF0A0A0B), Color.White, MiiIcon.Dots),
         MAX to ChannelStyle("HBO Max", Color(0xFF2B4CF0), Color(0xFF0A1C8C), Color.White, MiiIcon.Spark),
-        SPOTIFY to ChannelStyle("Spotify", Color(0xFF2A2A2A), Color(0xFF121212), Color(0xFF1ED760), MiiIcon.Waves),
-        KICK to ChannelStyle("Kick", Color(0xFF1A1A1A), Color(0xFF050505), Color(0xFF53FC18), MiiIcon.Kick),
+        SPOTIFY to ChannelStyle(
+            "Spotify", Color(0xFF2A2A2A), Color(0xFF121212), Color(0xFF1ED760), MiiIcon.Waves,
+            stageTop = Color(0xFF1ED760), stageBottom = Color(0xFF0E7A36),
+        ),
+        KICK to ChannelStyle(
+            "Kick", Color(0xFF1A1A1A), Color(0xFF050505), Color(0xFF53FC18), MiiIcon.Kick,
+            stageTop = Color(0xFF53FC18), stageBottom = Color(0xFF1F8A06),
+        ),
     )
 
     private const val KICK = "kick"

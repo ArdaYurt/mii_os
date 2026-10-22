@@ -56,16 +56,15 @@ fun Dock(
     modifier: Modifier = Modifier,
 ) {
     val unit = LocalUnit.current
-    val iconInk = LocalMiiColors.current.inkSoft
     GlassSurface(DockShape, modifier) {
         Row(
             Modifier.fillMaxSize().padding(start = unit * 7f, end = unit * 7f, top = unit * 1.6f),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            RoundButton("Settings", focused == DockButton.Settings) { drawMiiIcon(MiiIcon.Gear, iconInk) }
+            RoundButton("Settings", focused == DockButton.Settings) { drawSettingsEmblem() }
             Clock(now)
-            RoundButton("Share", focused == DockButton.Share) { drawMiiIcon(MiiIcon.Screens, iconInk) }
+            RoundButton("Share", focused == DockButton.Share) { drawShareEmblem() }
         }
     }
 }
@@ -84,8 +83,8 @@ private fun RoundButton(label: String, focused: Boolean, icon: DrawScope.() -> U
     ) {
         GlassSurface(CircleShape, Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Canvas(Modifier.size(unit * 2.4f)) { icon() }
-                Spacer(Modifier.height(unit * 0.3f))
+                Canvas(Modifier.size(unit * 3f)) { icon() }
+                Spacer(Modifier.height(unit * 0.15f))
                 Label(label, unit * 0.85f, colors.ink, FontWeight.Bold)
             }
         }

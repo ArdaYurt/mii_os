@@ -6,6 +6,12 @@ here, at the top, in the same pull request: the first bullets are what the pop-u
 biggest change first. Pull requests that don't change `VERSION` still reach the box as builds of the
 current version.
 
+## 0.4.3
+
+- Branded channel screens: Spotify opens on green, YouTube on red, with the channel's name drifting behind and its logo floating in front
+- A new pointing hand, closer to the Wii's
+- New Settings and Share buttons in the dock, glossy Wii blue
+
 ## 0.4.2
 
 - Channels fill their tiles edge to edge: no grey frame, and the blue focus ring sits right on the logo
