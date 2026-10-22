@@ -60,7 +60,7 @@ interface LauncherActions {
     fun launch(app: InstalledApp)
     fun openAppInfo(app: InstalledApp)
     fun openSystemSetting(item: SettingsItem)
-    /** Opens AirScreen for iPhone/iPad screen sharing, or its store page if it isn't installed. */
+    /** Opens the AirPlay receiver for iPhone/iPad screen sharing, or installs it from GitHub. */
     fun openScreenShare()
     fun installUpdate()
     /** Hides the update prompt until the next check. */
@@ -456,9 +456,9 @@ fun LauncherScreen(
             Zone.Dock -> if (dock == DockButton.Settings) {
                 openSettings()
             } else {
-                // the Screen Share channel: what it does, and Start (or Install) for AirScreen
+                // the Screen Share channel: what it does, and Start (or Install) for the AirPlay receiver
                 val share = shown.flatMap { (it as? Slot.Folder)?.apps ?: listOfNotNull((it as? Slot.App)?.app) }
-                    .firstOrNull { it.packageName == com.miios.launcher.art.ChannelStyles.AIRSCREEN }
+                    .firstOrNull { it.packageName == com.miios.launcher.art.ChannelStyles.SCREEN_SHARE }
                 if (share != null) openPreview(share, Zone.Dock) else { Sounds.play(Sfx.Select); actions.openScreenShare() }
             }
             Zone.Settings -> {

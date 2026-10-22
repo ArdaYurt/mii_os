@@ -24,6 +24,12 @@ object ChannelStyles {
     const val PLEX = "com.plexapp.android"
     const val PRIME_VIDEO = "com.amazon.amazonvideo.livingroom"
     const val STREMIO = "com.stremio.one"
+    /**
+     * Screen Share: the open-source AirPlay receiver by jqssun (GPL-3.0, built on UxPlay), installed
+     * from its GitHub releases. https://github.com/jqssun/android-airplay-server
+     */
+    const val SCREEN_SHARE = "io.github.jqssun.airplay"
+    /** AirScreen, the closed Play Store app Screen Share used before 0.5.0. */
     const val AIRSCREEN = "com.ionitech.airscreen"
     const val TV = TvActivity.CHANNEL_ID
     const val DISNEY_PLUS = "com.disney.disneyplus"
@@ -40,10 +46,10 @@ object ChannelStyles {
         ),
         PRIME_VIDEO to ChannelStyle("Prime Video", Color(0xFF3CC0F0), Color(0xFF0A68A0), Color.White, MiiIcon.PlayCircle),
         STREMIO to ChannelStyle("Stremio", Color(0xFF8A6CF7), Color(0xFF4325B0), Color.White, MiiIcon.Film),
-        AIRSCREEN to ChannelStyle(
+        SCREEN_SHARE to ChannelStyle(
             "Screen Share", Color(0xFF8ADAF8), Color(0xFF2F8FD8), Color.White, MiiIcon.Screens,
-            blurb = "Show your iPhone or iPad on the TV with AirPlay. Uses the free AirScreen app: " +
-                "open it once, then on the iPhone choose Control Centre > Screen Mirroring.",
+            blurb = "Show your iPhone or iPad on the TV with AirPlay. Uses a free, open-source receiver " +
+                "from GitHub, with no ads: open it, then on the iPhone choose Control Centre > Screen Mirroring.",
         ),
         TV to ChannelStyle("TV", Color(0xFFFFFFFF), Color(0xFFDDE2E7), Color(0xFF34BEED), MiiIcon.Antenna),
         DISNEY_PLUS to ChannelStyle("Disney+", Color(0xFF1F3E8C), Color(0xFF0B1A40), Color.White, MiiIcon.Plus),
@@ -82,7 +88,7 @@ object ChannelStyles {
         PLEX to listOf("plex"),
         PRIME_VIDEO to listOf("prime-video", "prime"),
         STREMIO to listOf("stremio"),
-        AIRSCREEN to listOf("screen-share", "airscreen"),
+        SCREEN_SHARE to listOf("screen-share", "airplay", "airscreen"),
         TV to listOf("tv"),
         DISNEY_PLUS to listOf("disney-plus", "disney"),
         MUBI to listOf("mubi"),

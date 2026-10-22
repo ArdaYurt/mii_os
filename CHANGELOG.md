@@ -6,6 +6,11 @@ here, at the top, in the same pull request: the first bullets are what the pop-u
 biggest change first. Pull requests that don't change `VERSION` still reach the box as builds of the
 current version.
 
+## 0.5.0
+
+- Screen Share now uses an open-source AirPlay receiver from GitHub: no ads, no Play Store. Open Screen Share and press Install
+- Screen Share keeps its place and folder on the home screen; you can uninstall AirScreen
+
 ## 0.4.3
 
 - The home screen looks more like the Wii Menu: plain white, empty places in soft grey with fine lines and a faint "Mii", a grey bottom bar edged in blue, and a segmented clock
