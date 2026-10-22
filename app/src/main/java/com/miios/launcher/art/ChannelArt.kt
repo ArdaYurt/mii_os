@@ -49,7 +49,7 @@ object ChannelArtLoader {
         cache.get(key)?.let { return it }
         return withContext(Dispatchers.IO) {
             val art = fromArtPack(context, app.packageName, width, height)
-                ?: ChannelStyles.forPackage(app.packageName)?.let { ChannelArt.Styled(it) }
+                ?: ChannelStyles.forApp(app.packageName, app.label)?.let { ChannelArt.Styled(it) }
                 ?: app.banner?.let { ChannelArt.FullBleed(it.toBitmap(width, height, Bitmap.Config.ARGB_8888).asImageBitmap()) }
                 ?: iconArt(app, height)
             cache.put(key, art)

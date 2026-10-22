@@ -26,21 +26,41 @@ jobs:
       - name: Restore signing key
         env:
           KEYSTORE_BASE64: ${{ secrets.MII_KEYSTORE_BASE64 }}
+          MII_KEYSTORE_PASSWORD: ${{ secrets.MII_KEYSTORE_PASSWORD }}
+          MII_KEY_ALIAS: ${{ secrets.MII_KEY_ALIAS }}
         if: env.KEYSTORE_BASE64 != ''
         run: |
           echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/mii.jks"
           echo "MII_KEYSTORE_PATH=$RUNNER_TEMP/mii.jks" >> "$GITHUB_ENV"
+          # Check the key opens before the build, and use whatever alias it was made with.
+          # Prints only alias names and types, never a password.
+          if ! keytool -list -keystore "$RUNNER_TEMP/mii.jks" -storepass "$MII_KEYSTORE_PASSWORD" > "$RUNNER_TEMP/keys.txt" 2>&1; then
+            echo "::error title=Signing key::keytool could not open the keystore: $(head -c 300 "$RUNNER_TEMP/keys.txt" | tr '\n' ' ')"
+            echo "::error title=Signing key::Keystore file is $(wc -c < "$RUNNER_TEMP/mii.jks") bytes, starts with $(head -c 4 "$RUNNER_TEMP/mii.jks" | od -An -tx1 | tr -d ' '); password is ${#MII_KEYSTORE_PASSWORD} characters."
+            exit 1
+          fi
+          echo "::notice title=Signing key::$(grep -iE 'PrivateKeyEntry|Keystore type|Your keystore contains' "$RUNNER_TEMP/keys.txt" | tr '\n' ' ')"
+          if [ -z "$MII_KEY_ALIAS" ]; then
+            alias=$(grep -i "PrivateKeyEntry" "$RUNNER_TEMP/keys.txt" | head -1 | cut -d, -f1)
+            if [ -z "$alias" ]; then
+              echo "::error title=Signing key::The keystore has no private key. Run tools/signing/make-key.bat again with a new folder."
+              exit 1
+            fi
+            echo "MII_KEY_ALIAS=$alias" >> "$GITHUB_ENV"
+          fi
 
       - name: Build release APK
         env:
           MII_KEYSTORE_PASSWORD: ${{ secrets.MII_KEYSTORE_PASSWORD }}
-          MII_KEY_ALIAS: ${{ secrets.MII_KEY_ALIAS }}
           MII_KEY_PASSWORD: ${{ secrets.MII_KEY_PASSWORD }}
+          # Starts above the hand-numbered first builds; the in-app updater compares these.
+          MII_VERSION_CODE: ${{ github.run_number }}0
         run: |
           chmod +x gradlew
           set -o pipefail
           ./gradlew --no-daemon assembleRelease 2>&1 | tee build.log
           cp app/build/outputs/apk/release/app-release.apk mii-os.apk
+          echo "{\"versionCode\": ${MII_VERSION_CODE}}" > version.json
 
       # Surface compiler and Gradle errors as annotations so they show on the PR's checks.
       - name: Report build errors
@@ -57,10 +77,15 @@ jobs:
 
       # Every push to main replaces the "latest" release, so the TV can always
       # download the newest build from the same short link.
+      # Without a permanent key every build is signed differently, and Android refuses to update
+      # one with the other, so version.json (which turns on the in-app updater) is only published
+      # for builds signed with the permanent key from tools/signing/make-key.ps1.
       - name: Publish latest build
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest mii-os.apk --title "Mii_OS latest build" --notes "Built from ${GITHUB_SHA::7}." --prerelease=false
+          files="mii-os.apk"
+          if [ -n "${MII_KEYSTORE_PATH:-}" ]; then files="$files version.json"; fi
+          gh release create latest $files --title "Mii_OS latest build" --notes "Built from ${GITHUB_SHA::7}." --prerelease=false

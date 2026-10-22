@@ -10,12 +10,14 @@ android {
 
     defaultConfig {
         applicationId = "com.miios.launcher"
-        // Mi Box S 2nd gen ships Google TV on Android 12 (API 31), which is also
-        // the first version with RenderEffect blur for the glass panels.
-        minSdk = 31
+        // Mi Box S 2nd gen runs Android 11 (API 30). Glass blur needs Android 12 (API 31),
+        // so on older boxes the glass panels fall back to a frosted tint (see Glass.kt).
+        minSdk = 30
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        // CI numbers every build, so the in-app updater can tell which one is newer.
+        val build = System.getenv("MII_VERSION_CODE")?.toIntOrNull() ?: 1
+        versionCode = build
+        versionName = "0.2.$build"
     }
 
     signingConfigs {
@@ -26,8 +28,9 @@ android {
             if (path != null) {
                 storeFile = file(path)
                 storePassword = System.getenv("MII_KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("MII_KEY_ALIAS")
-                keyPassword = System.getenv("MII_KEY_PASSWORD")
+                // tools/signing/make-key.ps1 makes one key named mii-os, with the keystore's password
+                keyAlias = System.getenv("MII_KEY_ALIAS")?.takeIf { it.isNotEmpty() } ?: "mii-os"
+                keyPassword = System.getenv("MII_KEY_PASSWORD")?.takeIf { it.isNotEmpty() } ?: storePassword
             }
         }
     }

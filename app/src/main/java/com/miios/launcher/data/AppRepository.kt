@@ -2,7 +2,10 @@ package com.miios.launcher.data
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
+import android.util.DisplayMetrics
 import com.miios.launcher.art.ChannelStyles
 import com.miios.launcher.tv.TvActivity
 
@@ -33,7 +36,7 @@ object AppRepository {
             for (info in pm.queryIntentActivities(query, 0)) {
                 val activity = info.activityInfo
                 val pkg = activity.packageName
-                if (pkg == context.packageName || pkg in byPackage) continue
+                if (pkg == context.packageName || pkg in byPackage || pkg in hidden) continue
                 val launch = Intent(Intent.ACTION_MAIN)
                     .addCategory(category)
                     .setClassName(pkg, activity.name)
@@ -42,8 +45,9 @@ object AppRepository {
                     packageName = pkg,
                     label = info.loadLabel(pm).toString(),
                     launchIntent = launch,
-                    banner = activity.loadBanner(pm) ?: activity.applicationInfo.loadBanner(pm),
-                    icon = info.loadIcon(pm),
+                    banner = sharp(pm, activity.applicationInfo, if (activity.banner != 0) activity.banner else activity.applicationInfo.banner)
+                        ?: activity.loadBanner(pm) ?: activity.applicationInfo.loadBanner(pm),
+                    icon = sharp(pm, activity.applicationInfo, if (info.iconResource != 0) info.iconResource else activity.iconResource) ?: info.loadIcon(pm),
                 )
             }
         }
@@ -70,9 +74,35 @@ object AppRepository {
         ChannelStyles.YOUTUBE,
         ChannelStyles.PLEX,
         ChannelStyles.PRIME_VIDEO,
+        ChannelStyles.STREMIO,
         ChannelStyles.AIRSCREEN,
         ChannelStyles.TV,
     )
+
+    /**
+     * The box's own Settings app: Mii_OS has its own Settings in the dock, so a second tile is noise.
+     * Google TV's stock launcher is hidden too, in case it's still installed.
+     */
+    private val hidden = setOf(
+        "com.android.tv.settings",
+        "com.android.settings",
+        "com.google.android.tv.settings",
+        "com.google.android.apps.tv.launcherx",
+    )
+
+    /**
+     * Loads a drawable at the highest density the app ships (xxxhdpi), not the box's own (xhdpi for a
+     * 1080p UI). Banners and icons are then decoded from 4× the pixels, which is what keeps them crisp
+     * when they're drawn large on the channel screen.
+     */
+    private fun sharp(pm: PackageManager, app: ApplicationInfo, resId: Int): Drawable? {
+        if (resId == 0) return null
+        return try {
+            pm.getResourcesForApplication(app).getDrawableForDensity(resId, DisplayMetrics.DENSITY_XXXHIGH, null)
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     private fun pinnedRank(pkg: String): Int = pinned.indexOf(pkg).let { if (it < 0) pinned.size else it }
 }

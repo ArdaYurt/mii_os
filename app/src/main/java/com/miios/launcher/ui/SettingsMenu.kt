@@ -28,7 +28,6 @@ enum class SettingsItem(val title: String, val detail: String, val icon: MiiIcon
     Network("Internet", "Wi-Fi and Ethernet", MiiIcon.Wifi),
     Display("Display & Sound", "Resolution, HDR, audio output", MiiIcon.Display),
     Apps("Apps", "Storage, updates, uninstall", MiiIcon.Apps),
-    HomeButton("Home Button", "Make Home open Mii_OS", MiiIcon.Remote),
     DateTime("Date & Time", "Clock and time zone", MiiIcon.Clock),
     System("All Settings", "Everything else on the box", MiiIcon.Sliders),
 }
@@ -40,14 +39,14 @@ const val SETTINGS_COLS = 2
  * [progress] runs 0→1 as it opens; it rises and fades in over the channel grid.
  */
 @Composable
-fun SettingsMenu(focused: Int, homeCaptureOn: Boolean, progress: () -> Float) {
+fun SettingsMenu(focused: Int, progress: () -> Float) {
     val unit = LocalUnit.current
     val colors = LocalMiiColors.current
     Box(
         Modifier
             .fillMaxSize()
             .graphicsLayer {
-                val p = progress()
+                val p = progress().coerceIn(0f, 1f)
                 alpha = p
                 translationY = (1f - p) * unit.toPx() * 4f
             },
@@ -69,10 +68,7 @@ fun SettingsMenu(focused: Int, homeCaptureOn: Boolean, progress: () -> Float) {
                 Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(unit * 3f)) {
                     for ((col, item) in row.value.withIndex()) {
                         val i = row.index * SETTINGS_COLS + col
-                        val detail = if (item == SettingsItem.HomeButton) {
-                            if (homeCaptureOn) "On: Home opens Mii_OS" else "Off: press to turn on"
-                        } else item.detail
-                        SettingsButton(item.icon, item.title, detail, i == focused, Modifier.weight(1f).fillMaxHeight())
+                        SettingsButton(item.icon, item.title, item.detail, i == focused, Modifier.weight(1f).fillMaxHeight())
                     }
                 }
             }
