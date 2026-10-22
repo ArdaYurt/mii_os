@@ -83,16 +83,25 @@ object Updater {
 
     /**
      * Downloads the APK at [url] and hands it to Android's installer, which asks the owner to confirm.
-     * The file must really be [pkg]: anything else is deleted, never installed. Each step shows in
-     * the download bar ([Downloads]); a failure shows there with its reason.
+     * A .tar.gz link is unpacked first and its .apk used. The file must really be [pkg]: anything
+     * else is deleted, never installed. Each step shows in the download bar ([Downloads]); a failure
+     * shows there with its reason.
      */
     suspend fun installFrom(context: Context, url: URL, pkg: String, title: String) {
         Downloads.activeFor(pkg)?.let { return }
         Downloads.start(pkg, title)
         val apk = File(context.cacheDir, "$pkg.apk")
+        val packed = File(context.cacheDir, "$pkg.tar.gz")
         try {
             withContext(Dispatchers.IO) {
-                download(url, apk, pkg)
+                if (url.path.endsWith(".tar.gz")) {
+                    download(url, packed, pkg)
+                    Downloads.update(pkg) { it.copy(stage = Downloads.Stage.Checking, progress = 1f) }
+                    unpackApk(packed, apk)
+                    packed.delete()
+                } else {
+                    download(url, apk, pkg)
+                }
                 Downloads.update(pkg) { it.copy(stage = Downloads.Stage.Checking, progress = 1f) }
                 val found = context.packageManager.getPackageArchiveInfo(apk.path, 0)?.packageName
                 if (found != pkg) throw java.io.IOException("the file isn't the right app (${found ?: "not an app"})")
@@ -103,7 +112,56 @@ object Updater {
             Downloads.update(pkg) { it.copy(stage = Downloads.Stage.Failed, message = reason(e)) }
         } finally {
             apk.delete()
+            packed.delete()
         }
+    }
+
+    /**
+     * Copies the first .apk out of a .tar.gz. A tar file is a row of 512-byte headers, each followed
+     * by its file padded to 512 bytes; the name is at the start of the header, the size in octal at 124.
+     */
+    private fun unpackApk(packed: File, apk: File) {
+        java.util.zip.GZIPInputStream(packed.inputStream().buffered()).use { input ->
+            val header = ByteArray(512)
+            while (true) {
+                if (!readFully(input, header)) break
+                if (header.all { it == 0.toByte() }) break
+                val name = String(header, 0, 100, Charsets.US_ASCII).substringBefore('\u0000')
+                val size = String(header, 124, 12, Charsets.US_ASCII).trim { it <= ' ' }.toLong(8)
+                val type = header[156].toInt().toChar()
+                val padded = (size + 511) / 512 * 512
+                if ((type == '0' || type == '\u0000') && name.endsWith(".apk")) {
+                    apk.outputStream().use { out ->
+                        val buffer = ByteArray(64 * 1024)
+                        var left = size
+                        while (left > 0) {
+                            val n = input.read(buffer, 0, minOf(buffer.size.toLong(), left).toInt())
+                            if (n < 0) throw java.io.IOException("the download was cut short. Try again")
+                            out.write(buffer, 0, n)
+                            left -= n
+                        }
+                    }
+                    return
+                }
+                var skip = padded
+                while (skip > 0) {
+                    val n = input.skip(skip)
+                    if (n <= 0) throw java.io.IOException("the download was cut short. Try again")
+                    skip -= n
+                }
+            }
+        }
+        throw java.io.IOException("the download has no app in it")
+    }
+
+    private fun readFully(input: java.io.InputStream, into: ByteArray): Boolean {
+        var done = 0
+        while (done < into.size) {
+            val n = input.read(into, done, into.size - done)
+            if (n < 0) return false
+            done += n
+        }
+        return true
     }
 
     private fun download(url: URL, apk: File, pkg: String) {

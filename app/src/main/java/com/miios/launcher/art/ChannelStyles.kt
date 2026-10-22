@@ -22,6 +22,11 @@ object ChannelStyles {
     const val APPLE_TV = "com.apple.atve.androidtv.appletv"
     const val YOUTUBE = "com.google.android.youtube.tv"
     const val PLEX = "com.plexapp.android"
+    /**
+     * Plezy: an open-source Plex client (GPL-3.0) by edde746, installed from its GitHub releases.
+     * https://github.com/edde746/plezy
+     */
+    const val PLEZY = "com.edde746.plezy"
     const val PRIME_VIDEO = "com.amazon.amazonvideo.livingroom"
     const val STREMIO = "com.stremio.one"
     /**
@@ -43,6 +48,12 @@ object ChannelStyles {
         PLEX to ChannelStyle(
             "Plex", Color(0xFF3A3D42), Color(0xFF1A1C1F), Color(0xFFEBAF00), MiiIcon.Chevron,
             stageTop = Color(0xFFF5BE1A), stageBottom = Color(0xFFB07F00),
+        ),
+        PLEZY to ChannelStyle(
+            "Plezy", Color(0xFF2E3137), Color(0xFF111214), Color(0xFFF5BE1A), MiiIcon.Film,
+            blurb = "Your Plex library in a faster, open-source player from GitHub, with no ads. " +
+                "Plays your films as they are, in 4K, HDR and Dolby Vision. Sign in with your Plex account.",
+            stageTop = Color(0xFF3A3D42), stageBottom = Color(0xFF0E0F11),
         ),
         PRIME_VIDEO to ChannelStyle("Prime Video", Color(0xFF3CC0F0), Color(0xFF0A68A0), Color.White, MiiIcon.PlayCircle),
         STREMIO to ChannelStyle("Stremio", Color(0xFF8A6CF7), Color(0xFF4325B0), Color.White, MiiIcon.Film),
@@ -86,6 +97,7 @@ object ChannelStyles {
         APPLE_TV to listOf("apple-tv", "appletv"),
         YOUTUBE to listOf("youtube"),
         PLEX to listOf("plex"),
+        PLEZY to listOf("plezy"),
         PRIME_VIDEO to listOf("prime-video", "prime"),
         STREMIO to listOf("stremio"),
         SCREEN_SHARE to listOf("screen-share", "airplay", "airscreen"),

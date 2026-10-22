@@ -27,9 +27,9 @@ import com.miios.launcher.service.RemoteKey
 /** A channel a remote button can open: null id means the button keeps its own job. */
 data class ButtonTarget(val id: String?, val label: String)
 
-/** The choices for a button: its own job, then the TV channel and Plex, then the rest by name. */
+/** The choices for a button: its own job, then the TV channel, Plezy and Plex, then the rest by name. */
 fun buttonTargets(apps: List<InstalledApp>): List<ButtonTarget> {
-    val first = listOf(ChannelStyles.TV, ChannelStyles.PLEX)
+    val first = listOf(ChannelStyles.TV, ChannelStyles.PLEZY, ChannelStyles.PLEX)
     val installed = apps.filter { it.installed }.distinctBy { it.packageName }
     return listOf(ButtonTarget(null, "Its own job")) +
         first.mapNotNull { id -> installed.firstOrNull { it.packageName == id } }.map { ButtonTarget(it.packageName, it.label) } +
