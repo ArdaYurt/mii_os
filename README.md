@@ -144,13 +144,16 @@ it on (Android only lets the box's owner do that). The speed-up script can also 
 
 ### Remote buttons
 
-**Settings › Remote buttons** gives the remote's **TV+** and **Assistant** buttons a new job: ← → on
-a row picks what the button opens (the TV channel, Plex, any installed channel, or *Its own job* to
-leave it alone). TV+ opens the TV channel by default. If a button doesn't react, press OK on its
-row and then the button, and Mii_OS learns it. This uses the same accessibility service as the HOME
+**Settings › Remote buttons** sets what the remote's **TV+**, **Netflix**, **YouTube**, **Prime Video**
+and **Assistant** buttons open: ← → on a row picks what the button opens (the TV channel, Plex, any
+installed channel, or *Its own job* to leave it alone). TV+ opens the TV channel by default and the
+others open their own app: the box's own handler for them goes through the stock Google TV home, so
+it fails once the speed-up has switched that off. If a button doesn't react, press OK on its row and
+then the button, and Mii_OS learns it. This uses the same accessibility service as the HOME
 Menu, so switch that on first. The Mi Box S remote sends its Assistant button over its voice link
-rather than as a key, so on that remote Mii_OS can't see it and it stays Google Assistant. Gemini can't be put on the Assistant button: Google only
-offers Gemini for TV on Google TV devices with Android 14 or newer, and the Mi Box S runs Android 11.
+rather than as a key, so on that remote Mii_OS can't see it and it stays Google Assistant. Gemini
+can't be put on the Assistant button: Google only offers Gemini for TV on Google TV devices with
+Android 14 or newer, and the Mi Box S runs Android 11.
 
 ### Sounds and your own sound pack
 

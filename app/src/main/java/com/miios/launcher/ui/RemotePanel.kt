@@ -61,7 +61,7 @@ fun RemotePanel(focused: RemoteKey, targets: List<ButtonTarget>, progress: () ->
                     scaleY = s
                 },
         ) {
-            Column(Modifier.padding(unit * 2f), verticalArrangement = Arrangement.spacedBy(unit * 1f)) {
+            Column(Modifier.padding(unit * 2f), verticalArrangement = Arrangement.spacedBy(unit * 0.8f)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(unit * 1f)) {
                     Canvas(Modifier.size(unit * 2.6f)) { drawMiiIcon(MiiIcon.Remote, colors.focus, weight = 2.4f) }
                     Label("Remote buttons", unit * 2.2f, colors.ink, FontWeight.ExtraBold)
@@ -96,7 +96,7 @@ fun RemotePanel(focused: RemoteKey, targets: List<ButtonTarget>, progress: () ->
 private fun ButtonRow(title: String, status: String, target: String, focused: Boolean, waiting: Boolean) {
     val unit = LocalUnit.current
     val colors = LocalMiiColors.current
-    RowFrame(focused, height = 6.4f) {
+    RowFrame(focused, height = 5.4f) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(unit * 1.4f)) {
             Column(Modifier.weight(1f)) {
                 Label(title, unit * 1.6f, colors.ink, FontWeight.Bold)

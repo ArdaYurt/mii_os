@@ -6,6 +6,10 @@ here, at the top, in the same pull request: the first bullets are what the pop-u
 biggest change first. Pull requests that don't change `VERSION` still reach the box as builds of the
 current version.
 
+## 0.6.2
+
+- The remote's Netflix, YouTube and Prime Video buttons work again with Mii_OS as home, and can be set to open something else in Settings › Remote buttons
+
 ## 0.6.1
 
 - Plezy, a faster open-source Plex app, has its own channel: open it and press Install. It comes from its developer's GitHub, with no ads, and plays your films in 4K, HDR and Dolby Vision
