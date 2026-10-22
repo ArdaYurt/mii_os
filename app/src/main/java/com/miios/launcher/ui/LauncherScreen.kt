@@ -49,6 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import com.miios.launcher.data.InstalledApp
 import com.miios.launcher.data.Slot
 import com.miios.launcher.sound.Sfx
+import com.miios.launcher.update.Downloads
 import com.miios.launcher.sound.Music
 import com.miios.launcher.sound.Sounds
 import kotlinx.coroutines.delay
@@ -92,6 +93,7 @@ fun LauncherScreen(
     slots: List<Slot>,
     homePresses: Int,
     update: UpdateState,
+    download: Downloads.Download?,
     actions: LauncherActions,
 ) {
     var now by remember { mutableStateOf(LocalDateTime.now()) }
@@ -142,6 +144,13 @@ fun LauncherScreen(
     var renameInitial by remember { mutableStateOf("") }
     // The channel the channel screen shows, and where Back from it goes.
     var previewTarget by remember { mutableStateOf<InstalledApp?>(null) }
+    // An app installed while its channel screen is open: Install turns into Start right there.
+    LaunchedEffect(slots) {
+        val open = previewTarget ?: return@LaunchedEffect
+        val fresh = slots.flatMap { (it as? Slot.Folder)?.apps ?: listOfNotNull((it as? Slot.App)?.app) }
+            .firstOrNull { it.packageName == open.packageName }
+        if (fresh != null) previewTarget = fresh
+    }
     var previewReturn by remember { mutableStateOf(Zone.Grid) }
 
     // while moving there's always a page more, so a channel can go to a new page
@@ -316,7 +325,7 @@ fun LauncherScreen(
         when (zone) {
             Zone.Preview -> closePreview()
             Zone.Settings -> closeSettings()
-            Zone.Update -> if (update !is UpdateState.Downloading) {
+            Zone.Update -> {
                 Sounds.play(Sfx.Back)
                 actions.dismissUpdate()
             }
@@ -667,6 +676,14 @@ fun LauncherScreen(
             if (zone == Zone.Sound || soundVisible) {
                 SoundPanel(soundRow) { soundAnim.value }
             }
+
+            // the download manager: what's downloading or installing, over the tips line above the dock
+            DownloadBar(
+                download,
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .offset(y = unit * 41.2f),
+            )
 
             if (zone == Zone.Update || updateVisible) {
                 UpdatePrompt(update, updateButton) { updateAnim.value }

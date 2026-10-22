@@ -77,58 +77,87 @@ object Updater {
         return false
     }
 
-    /** Downloads the latest APK and hands it to Android's installer, which asks the owner to confirm. */
-    suspend fun install(context: Context, onProgress: (Float) -> Unit) =
-        installFrom(context, URL(BASE + "mii-os.apk"), context.packageName, onProgress)
+    /** Downloads the latest Mii_OS and hands it to Android's installer, which asks the owner to confirm. */
+    suspend fun install(context: Context, name: String) =
+        installFrom(context, URL(BASE + "mii-os.apk"), context.packageName, "Mii_OS $name".trim())
 
     /**
      * Downloads the APK at [url] and hands it to Android's installer, which asks the owner to confirm.
-     * The file must really be [pkg]: anything else is deleted, never installed.
+     * The file must really be [pkg]: anything else is deleted, never installed. Each step shows in
+     * the download bar ([Downloads]); a failure shows there with its reason.
      */
-    suspend fun installFrom(context: Context, url: URL, pkg: String, onProgress: (Float) -> Unit) {
+    suspend fun installFrom(context: Context, url: URL, pkg: String, title: String) {
+        Downloads.activeFor(pkg)?.let { return }
+        Downloads.start(pkg, title)
         val apk = File(context.cacheDir, "$pkg.apk")
-        withContext(Dispatchers.IO) {
-            val connection = open(url)
-            val total = connection.contentLengthLong.takeIf { it > 0 } ?: -1L
-            connection.inputStream.use { input ->
-                apk.outputStream().use { output ->
-                    val buffer = ByteArray(64 * 1024)
-                    var done = 0L
-                    while (true) {
-                        val n = input.read(buffer)
-                        if (n < 0) break
-                        output.write(buffer, 0, n)
-                        done += n
-                        if (total > 0) onProgress(done.toFloat() / total)
+        try {
+            withContext(Dispatchers.IO) {
+                download(url, apk, pkg)
+                Downloads.update(pkg) { it.copy(stage = Downloads.Stage.Checking, progress = 1f) }
+                val found = context.packageManager.getPackageArchiveInfo(apk.path, 0)?.packageName
+                if (found != pkg) throw java.io.IOException("the file isn't the right app (${found ?: "not an app"})")
+                Downloads.update(pkg) { it.copy(stage = Downloads.Stage.Installing) }
+                commit(context, apk, pkg)
+            }
+        } catch (e: Exception) {
+            Downloads.update(pkg) { it.copy(stage = Downloads.Stage.Failed, message = reason(e)) }
+        } finally {
+            apk.delete()
+        }
+    }
+
+    private fun download(url: URL, apk: File, pkg: String) {
+        val connection = open(url)
+        val total = connection.contentLengthLong.takeIf { it > 0 } ?: -1L
+        Downloads.update(pkg) { it.copy(totalBytes = total) }
+        connection.inputStream.use { input ->
+            apk.outputStream().use { output ->
+                val buffer = ByteArray(64 * 1024)
+                var done = 0L
+                var shown = -1L
+                while (true) {
+                    val n = input.read(buffer)
+                    if (n < 0) break
+                    output.write(buffer, 0, n)
+                    done += n
+                    // the bar moves in 1% (or, without a size, 256 KB) steps: one redraw each
+                    val step = if (total > 0) done * 100 / total else done / (256 * 1024)
+                    if (step != shown) {
+                        shown = step
+                        val progress = if (total > 0) done.toFloat() / total else -1f
+                        Downloads.update(pkg) { it.copy(progress = progress, doneBytes = done) }
                     }
                 }
             }
-
-            val found = context.packageManager.getPackageArchiveInfo(apk.path, 0)?.packageName
-            if (found != pkg) {
-                apk.delete()
-                throw java.io.IOException("Downloaded file is ${found ?: "not an app"}, expected $pkg")
-            }
-
-            val installer = context.packageManager.packageInstaller
-            val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
-            params.setAppPackageName(pkg)
-            val id = installer.createSession(params)
-            installer.openSession(id).use { session ->
-                session.openWrite("$pkg.apk", 0, apk.length()).use { out ->
-                    apk.inputStream().use { it.copyTo(out) }
-                    session.fsync(out)
-                }
-                val callback = PendingIntent.getBroadcast(
-                    context,
-                    id,
-                    Intent(context, InstallResultReceiver::class.java),
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
-                )
-                session.commit(callback.intentSender)
-            }
-            apk.delete()
         }
+    }
+
+    private fun commit(context: Context, apk: File, pkg: String) {
+        val installer = context.packageManager.packageInstaller
+        val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
+        params.setAppPackageName(pkg)
+        val id = installer.createSession(params)
+        installer.openSession(id).use { session ->
+            session.openWrite("$pkg.apk", 0, apk.length()).use { out ->
+                apk.inputStream().use { it.copyTo(out) }
+                session.fsync(out)
+            }
+            val callback = PendingIntent.getBroadcast(
+                context,
+                id,
+                Intent(context, InstallResultReceiver::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+            )
+            session.commit(callback.intentSender)
+        }
+    }
+
+    /** A failure in words people can act on. */
+    private fun reason(e: Exception): String = when (e) {
+        is java.net.UnknownHostException -> "No internet connection"
+        is java.net.SocketTimeoutException -> "The download timed out. Try again"
+        is java.io.IOException -> e.message?.takeIf { it.isNotBlank() }?.replaceFirstChar { it.uppercase() } ?: "The download stopped. Try again"
+        else -> e.message ?: e.javaClass.simpleName
     }
 
     private fun current(context: Context): Int =
@@ -150,7 +179,7 @@ object Updater {
                 target = URL(target, c.getHeaderField("Location"))
                 c.disconnect()
             } else {
-                if (code != HttpURLConnection.HTTP_OK) throw java.io.IOException("HTTP $code for $target")
+                if (code != HttpURLConnection.HTTP_OK) throw java.io.IOException("GitHub answered $code: the file isn't there")
                 return c
             }
         }
@@ -161,25 +190,30 @@ object Updater {
 /** Android's installer reports back here: it needs the owner's OK, or it finished. */
 class InstallResultReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        val pkg = intent.getStringExtra(PackageInstaller.EXTRA_PACKAGE_NAME)
+        fun show(stage: Downloads.Stage, message: String? = null) {
+            if (pkg != null) Downloads.update(pkg) { it.copy(stage = stage, message = message) }
+        }
         when (intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)) {
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
                 @Suppress("DEPRECATION")
                 val confirm = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT) ?: return
                 context.startActivity(confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }
-            PackageInstaller.STATUS_SUCCESS -> Unit
+            PackageInstaller.STATUS_SUCCESS -> show(Downloads.Stage.Done)
+            PackageInstaller.STATUS_FAILURE_ABORTED -> show(Downloads.Stage.Cancelled)
             else -> {
                 val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE).orEmpty()
-                val pkg = intent.getStringExtra(PackageInstaller.EXTRA_PACKAGE_NAME)
-                if (pkg != null && pkg != context.packageName) {
-                    Toast.makeText(context, "Didn't install. $message", Toast.LENGTH_LONG).show()
-                    return
-                }
                 // A different signing key is the usual cause: the old build has to be uninstalled once.
-                val hint = if ("signature" in message.lowercase() || "conflict" in message.lowercase()) {
-                    " This build was signed differently: uninstall Mii_OS once and install it again."
-                } else ""
-                Toast.makeText(context, "Update didn't install. $message$hint", Toast.LENGTH_LONG).show()
+                val signedDifferently = "signature" in message.lowercase() || "conflict" in message.lowercase()
+                show(
+                    Downloads.Stage.Failed,
+                    when {
+                        signedDifferently && pkg == context.packageName -> "This build was signed differently: uninstall Mii_OS once and install it again"
+                        signedDifferently -> "A different copy of this app is installed: uninstall it once, then try again"
+                        else -> message.ifEmpty { "Android didn't install it" }
+                    },
+                )
             }
         }
     }
