@@ -8,6 +8,7 @@ current version.
 
 ## 0.4.3
 
+- The home screen looks more like the Wii Menu: plain white, empty places in soft grey with fine lines and a faint "Mii", a grey bottom bar edged in blue, and a segmented clock
 - Branded channel screens: Spotify opens on green, YouTube on red, with the channel's name drifting behind and its logo floating in front
 - A new pointing hand, closer to the Wii's
 - New Settings and Share buttons in the dock, glossy Wii blue
