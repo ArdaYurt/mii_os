@@ -79,6 +79,7 @@ private fun RoundButton(label: String, focused: Boolean, icon: DrawScope.() -> U
     Box(
         Modifier
             .size(unit * 7f)
+            .pointerTarget(focused)
             .graphicsLayer { scaleX = scale; scaleY = scale },
     ) {
         GlassSurface(CircleShape, Modifier.fillMaxSize()) {

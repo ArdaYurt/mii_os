@@ -113,7 +113,7 @@ fun ChannelPreview(
                     horizontalArrangement = Arrangement.spacedBy(unit * 4f, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    PillButton(if (app.installed) "Menu" else "Details", MiiIcon.Sliders, focused == PreviewButton.Menu)
+                    PillButton("Options", MiiIcon.Sliders, focused == PreviewButton.Menu)
                     PillButton(if (app.installed) "Start" else "Install", if (app.installed) MiiIcon.PlayCircle else MiiIcon.Download, focused == PreviewButton.Start)
                 }
             }

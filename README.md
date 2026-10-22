@@ -96,9 +96,9 @@ TV channel screen in the launcher.
 
 | Remote | What it does |
 |---|---|
-| ← ↑ → ↓ | Move between channels. Going past the right or left edge turns the page. |
-| Down from the bottom row | Reach the dock: **Settings** opens the Mii_OS Settings screen, **Share** opens AirScreen for iPhone/iPad screen sharing. |
-| OK | The channel grows into its channel screen. **Start** launches the app, **Menu** shows its app info. |
+| ← ↑ → ↓ | Move between channels; the hand follows. Going past the right or left edge turns the page; the arrows at the screen's edges show when there's another page. |
+| Down from the bottom row | Reach the dock: **Settings** opens the Mii_OS Settings screen, **Share** opens the Screen Share channel (AirScreen, for iPhone/iPad screen sharing). |
+| OK | The channel grows into its channel screen. **Start** launches the app, **Options** moves it, puts it in a folder or shows its app info. |
 | Hold OK (or the menu button) | Options for that channel: **Move** it (arrows carry it, OK puts it down), make a **New folder**, or **Add to** an existing folder. On a folder: move, rename or remove it. Inside a folder: move a channel back out. |
 | Back | Close the channel screen, folder or menu. |
 | Home | Return to the first page. |
@@ -107,7 +107,9 @@ TV channel screen in the launcher.
 
 Press Home inside any app and the HOME Menu opens over it, as on the Wii. Press Home again or OK on
 **Mii_OS Menu** to go to the home screen; Back (or **Close**) returns to the app. It needs the
-*Mii_OS Home button* accessibility service, which the speed-up script turns on.
+*Mii_OS Home button* accessibility service. To turn it on, open **Settings › HOME Menu** in Mii_OS:
+it takes you to the box's Accessibility settings, where you choose *Mii_OS Home button* and switch
+it on (Android only lets the box's owner do that). The speed-up script can also turn it on.
 
 ### Sounds and your own sound pack
 

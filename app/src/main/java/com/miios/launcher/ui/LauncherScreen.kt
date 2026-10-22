@@ -41,6 +41,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -162,11 +163,15 @@ fun LauncherScreen(
     // When the channel screen opened. OK presses right after it are ignored, so the press that
     // opened it (or the remote's repeat of it) can't also hit Start.
     var previewOpenedAt by remember { mutableStateOf(0L) }
+    val pointer = remember { PointerTarget() }
+    // bumps on every page turn, so the page arrows nudge
+    var turns by remember { mutableIntStateOf(0) }
+    LaunchedEffect(page) { turns++ }
 
     fun openPreview(app: InstalledApp, from: Zone) {
         previewTarget = app
         previewReturn = from
-        previewOrigin = focusedBounds[0]
+        previewOrigin = pointer.coords?.takeIf { it.isAttached }?.boundsInRoot() ?: focusedBounds[0]
         previewOpenedAt = android.os.SystemClock.uptimeMillis()
         zone = Zone.Preview
         previewButton = PreviewButton.Start
@@ -239,6 +244,7 @@ fun LauncherScreen(
                         startRename(id, "New folder")
                     }
                     for (f in folders) list += MenuOption("Add to ${f.name}", MiiIcon.Download) { actions.addToFolder(slot.app.packageName, f.id) }
+                    list += MenuOption(if (slot.app.installed) "App info" else "Get it", MiiIcon.Sliders) { actions.openAppInfo(slot.app) }
                 }
                 is Slot.Folder -> {
                     optionsTitle = slot.name
@@ -256,6 +262,7 @@ fun LauncherScreen(
                     actions.removeFromFolder(app.packageName, folder.id)
                     folderIndex = (folderIndex - 1).coerceAtLeast(0)
                 }
+                list += MenuOption(if (app.installed) "App info" else "Get it", MiiIcon.Sliders) { actions.openAppInfo(app) }
             }
             else -> return
         }
@@ -430,8 +437,10 @@ fun LauncherScreen(
             Zone.Dock -> if (dock == DockButton.Settings) {
                 openSettings()
             } else {
-                Sounds.play(Sfx.Select)
-                actions.openScreenShare()
+                // the Screen Share channel: what it does, and Start (or Install) for AirScreen
+                val share = shown.flatMap { (it as? Slot.Folder)?.apps ?: listOfNotNull((it as? Slot.App)?.app) }
+                    .firstOrNull { it.packageName == com.miios.launcher.art.ChannelStyles.AIRSCREEN }
+                if (share != null) openPreview(share, Zone.Dock) else { Sounds.play(Sfx.Select); actions.openScreenShare() }
             }
             Zone.Settings -> {
                 Sounds.play(Sfx.Select)
@@ -459,7 +468,14 @@ fun LauncherScreen(
                 if (android.os.SystemClock.uptimeMillis() - previewOpenedAt < 350) return
                 val app = previewTarget ?: return
                 when {
-                    previewButton == PreviewButton.Menu -> { Sounds.play(Sfx.Select); actions.openAppInfo(app); closePreview() }
+                    previewButton == PreviewButton.Menu -> if (previewReturn == Zone.Dock) {
+                        Sounds.play(Sfx.Select); actions.openAppInfo(app); closePreview()
+                    } else {
+                        // Options for this channel: move, folders, app info. They open over the grid.
+                        zone = previewReturn
+                        scope.launch { previewAnim.animateTo(0f, Motion.preview) }
+                        openOptions()
+                    }
                     app.installed -> startApp(app)
                     else -> { actions.launch(app); closePreview() }
                 }
@@ -468,6 +484,12 @@ fun LauncherScreen(
     }
 
     var okDown by remember { mutableStateOf(false) }
+    var holdJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    fun held() {
+        holdJob?.cancel()
+        okDown = false
+        if (moving == null) openOptions()
+    }
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
     BoxWithConstraints(
@@ -495,13 +517,19 @@ fun LauncherScreen(
                         Key.Menu -> if (event.type == KeyEventType.KeyUp) openOptions()
                         else -> if (event.type == KeyEventType.KeyDown) {
                             val repeat = event.nativeKeyEvent.repeatCount
-                            if (repeat == 0) okDown = true
-                            // held: open the options for this channel instead of opening it
-                            if (repeat == 1 && okDown) {
-                                okDown = false
-                                if (moving == null) openOptions()
+                            if (repeat == 0) {
+                                okDown = true
+                                // held: open the options for this channel instead of opening it.
+                                // Timed as well as by key repeat, since some remotes don't repeat OK.
+                                holdJob?.cancel()
+                                holdJob = scope.launch {
+                                    delay(600)
+                                    if (okDown) held()
+                                }
                             }
+                            if (repeat == 1 && okDown) held()
                         } else if (event.type == KeyEventType.KeyUp && okDown) {
+                            holdJob?.cancel()
                             okDown = false
                             select()
                         }
@@ -520,6 +548,7 @@ fun LauncherScreen(
             LocalMiiColors provides colors,
             LocalUnit provides unit,
             LocalBackdrop provides Backdrop(screen, scene),
+            LocalPointer provides pointer,
         ) {
             scene()
 
@@ -548,10 +577,37 @@ fun LauncherScreen(
                 }
             }
 
+            // Wii-style page arrows at the edges, beside the grid, when there's a page that way
+            val arrowsOn = zone == Zone.Grid || zone == Zone.Dock
+            PageArrow(
+                pointsRight = false,
+                visible = arrowsOn && page > 0,
+                turns = turns,
+                modifier = Modifier.offset(x = unit * 1.2f, y = unit * 19.4f).size(unit * 3.2f, unit * 4.6f),
+            )
+            PageArrow(
+                pointsRight = true,
+                visible = arrowsOn && page < pageCount - 1,
+                turns = turns,
+                modifier = Modifier.align(Alignment.TopEnd).offset(x = -unit * 1.2f, y = unit * 19.4f).size(unit * 3.2f, unit * 4.6f),
+            )
+
             PageDots(pageCount, page, Modifier.align(Alignment.TopCenter).offset(y = unit * 42.6f))
+            // tips, taking turns under the grid
+            var tip by remember { mutableIntStateOf(0) }
+            LaunchedEffect(Unit) {
+                while (true) {
+                    delay(7000)
+                    tip++
+                }
+            }
+            val homeMenuOn = com.miios.launcher.service.HomeButtonService.on
             Label(
-                if (moving != null) "Moving: use the arrows, then press OK to put it down"
-                else "Hold OK on a channel to move it or make a folder",
+                when {
+                    moving != null -> "Moving: use the arrows, then press OK to put it down"
+                    !homeMenuOn && tip % 2 == 1 -> "Turn on the HOME Menu in Settings › HOME Menu"
+                    else -> "Hold OK, or choose Options, to move a channel or make a folder"
+                },
                 unit * 1.05f,
                 colors.inkSoft.copy(alpha = if (moving != null) 1f else 0.6f),
                 FontWeight.Medium,
@@ -585,7 +641,7 @@ fun LauncherScreen(
             }
 
             if (zone == Zone.Settings || settingsVisible) {
-                SettingsMenu(settingsIndex) { settingsAnim.value }
+                SettingsMenu(if (zone == Zone.Settings) settingsIndex else -1) { settingsAnim.value }
             }
 
             if (zone == Zone.Sound || soundVisible) {
@@ -599,6 +655,11 @@ fun LauncherScreen(
             if (zone == Zone.Options || optionsVisible) {
                 OptionsMenu(optionsTitle, options, optionIndex) { optionsAnim.value }
             }
+
+            HandPointer(
+                pointer,
+                show = (zone == Zone.Grid || zone == Zone.Folder || zone == Zone.Dock || zone == Zone.Settings) && !launchAnim.isRunning,
+            )
 
             val renaming = renameId
             if (zone == Zone.Rename && renaming != null) {

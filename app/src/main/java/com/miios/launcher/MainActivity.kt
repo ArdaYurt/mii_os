@@ -15,6 +15,7 @@ import com.miios.launcher.data.AppRepository
 import com.miios.launcher.data.HomeLayout
 import com.miios.launcher.data.InstalledApp
 import com.miios.launcher.data.Slot
+import com.miios.launcher.service.HomeButtonService
 import com.miios.launcher.sound.Music
 import com.miios.launcher.sound.Sounds
 import com.miios.launcher.art.ChannelArtLoader
@@ -56,6 +57,7 @@ class MainActivity : ComponentActivity() {
 
         override fun openSystemSetting(item: SettingsItem) {
             if (item == SettingsItem.Updates) return checkForUpdate(force = true)
+            if (item == SettingsItem.HomeMenu) return openHomeMenuSetup()
 
             val action = when (item) {
                 SettingsItem.Network -> Settings.ACTION_WIFI_SETTINGS
@@ -63,7 +65,7 @@ class MainActivity : ComponentActivity() {
                 SettingsItem.Apps -> Settings.ACTION_APPLICATION_SETTINGS
                 SettingsItem.DateTime -> Settings.ACTION_DATE_SETTINGS
                 SettingsItem.System -> Settings.ACTION_SETTINGS
-                SettingsItem.Updates, SettingsItem.Sounds -> return
+                SettingsItem.Updates, SettingsItem.Sounds, SettingsItem.HomeMenu -> return
             }
             // Google TV doesn't have every settings page; fall back to the main one.
             val intent = Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -150,8 +152,23 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Settings › HOME Menu: the box's Accessibility settings, where "Mii_OS Home button" is
+     * switched on or off by hand. Android only lets the owner turn such a service on.
+     */
+    private fun openHomeMenuSetup() {
+        Toast.makeText(
+            this,
+            if (HomeButtonService.on) "Choose \"Mii_OS Home button\" to turn the HOME Menu off"
+            else "Choose \"Mii_OS Home button\", turn it on, then press Back",
+            Toast.LENGTH_LONG,
+        ).show()
+        start(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
     override fun onResume() {
         super.onResume()
+        HomeButtonService.refresh(this)
         // picks up a sound pack copied over while Mii_OS was in the background
         Sounds.load(this)
         Music.play(this)

@@ -22,6 +22,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
+import com.miios.launcher.service.HomeButtonService
 
 /** Entries on the Mii_OS Settings screen. Each opens the matching page of the box's own settings. */
 enum class SettingsItem(val title: String, val detail: String, val icon: MiiIcon) {
@@ -30,6 +31,7 @@ enum class SettingsItem(val title: String, val detail: String, val icon: MiiIcon
     Apps("Apps", "Storage, updates, uninstall", MiiIcon.Apps),
     DateTime("Date & Time", "Clock and time zone", MiiIcon.Clock),
     Sounds("Sounds", "Clicks and chimes", MiiIcon.PlayCircle),
+    HomeMenu("HOME Menu", "The pop-up when you press Home in an app", MiiIcon.Home),
     Updates("Mii_OS Update", "Check for a new version", MiiIcon.Download),
     System("All Settings", "Everything else on the box", MiiIcon.Sliders),
 }
@@ -70,9 +72,13 @@ fun SettingsMenu(focused: Int, progress: () -> Float) {
                 Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(unit * 3f)) {
                     for ((col, item) in row.value.withIndex()) {
                         val i = row.index * SETTINGS_COLS + col
-                        val detail = if (item == SettingsItem.Sounds) {
-                            if (com.miios.launcher.sound.Sounds.enabled) "On: press to turn off" else "Off: press to turn on"
-                        } else item.detail
+                        val detail = when (item) {
+                            SettingsItem.Sounds ->
+                                if (com.miios.launcher.sound.Sounds.enabled) "On: press to turn off" else "Off: press to turn on"
+                            SettingsItem.HomeMenu ->
+                                if (HomeButtonService.on) "On: press Home in any app" else "Off: press to set it up"
+                            else -> item.detail
+                        }
                         SettingsButton(item.icon, item.title, detail, i == focused, Modifier.weight(1f).fillMaxHeight())
                     }
                 }
@@ -89,7 +95,7 @@ private fun SettingsButton(icon: MiiIcon, title: String, detail: String, focused
     val scale = animateFloatAsState(if (focused) 1.05f else 1f, Motion.focusScale, label = "settingsScale")
     val ring = animateFloatAsState(if (focused) 1f else 0f, Motion.glow, label = "settingsRing")
     val radius = unit * 2.4f
-    Box(modifier.graphicsLayer { scaleX = scale.value; scaleY = scale.value }) {
+    Box(modifier.pointerTarget(focused).graphicsLayer { scaleX = scale.value; scaleY = scale.value }) {
         GlassSurface(RoundedCornerShape(radius), Modifier.fillMaxSize()) {
             Row(
                 Modifier.align(Alignment.CenterStart).padding(start = unit * 2.4f),
