@@ -62,7 +62,14 @@ jobs:
           set -o pipefail
           ./gradlew --no-daemon assembleRelease 2>&1 | tee build.log
           cp app/build/outputs/apk/release/app-release.apk mii-os.apk
-          echo "{\"versionCode\": ${MII_VERSION_CODE}}" > version.json
+          # The update pop-up shows the version and the top of its notes from CHANGELOG.md.
+          version=$(tr -d '[:space:]' < VERSION)
+          awk -v v="## $version" '$0 == v {on=1; next} /^## / {on=0} on' CHANGELOG.md | sed '/^\s*$/d' > notes.md
+          python3 -c 'import json,sys; print(json.dumps({"versionCode": int(sys.argv[1]), "versionName": sys.argv[2], "notes": [l[2:].strip() for l in open("notes.md") if l.startswith("- ")]}))' \
+            "$MII_VERSION_CODE" "$version" > version.json
+          cat version.json
+          echo "MII_VERSION=$version" >> "$GITHUB_ENV"
+          echo "MII_VERSION_CODE=$MII_VERSION_CODE" >> "$GITHUB_ENV"
 
       # Surface compiler and Gradle errors as annotations so they show on the PR's checks.
       - name: Report build errors
@@ -90,4 +97,11 @@ jobs:
           gh release delete latest --yes --cleanup-tag || true
           files="mii-os.apk"
           if [ -n "${MII_KEYSTORE_PATH:-}" ]; then files="$files version.json"; fi
-          gh release create latest $files --title "Mii_OS latest build" --notes "Built from ${GITHUB_SHA::7}." --prerelease=false
+          # The box downloads from /releases/latest/, so this one is always marked Latest.
+          gh release create latest $files --title "Mii_OS $MII_VERSION (build $MII_VERSION_CODE)" \
+            --notes "Built from ${GITHUB_SHA::7}." --latest
+          # A new number in VERSION also gets its own release with its notes, kept for the record.
+          if ! gh release view "v$MII_VERSION" > /dev/null 2>&1; then
+            gh release create "v$MII_VERSION" mii-os.apk --title "Mii_OS $MII_VERSION" \
+              --notes-file notes.md --target "$GITHUB_SHA" --latest=false
+          fi

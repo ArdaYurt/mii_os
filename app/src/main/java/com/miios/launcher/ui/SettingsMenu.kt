@@ -68,11 +68,14 @@ fun SettingsMenu(focused: Int, progress: () -> Float) {
                 Canvas(Modifier.fillMaxSize()) { drawRect(colors.focus) }
             }
             val items = SettingsItem.entries
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val versionName = androidx.compose.runtime.remember { com.miios.launcher.update.Updater.currentName(context) }
             for (row in items.chunked(SETTINGS_COLS).withIndex()) {
                 Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(unit * 3f)) {
                     for ((col, item) in row.value.withIndex()) {
                         val i = row.index * SETTINGS_COLS + col
                         val detail = when (item) {
+                            SettingsItem.Updates -> "Version $versionName: check for a new one"
                             SettingsItem.Sounds ->
                                 if (com.miios.launcher.sound.Sounds.enabled) "On: press to turn off" else "Off: press to turn on"
                             SettingsItem.HomeMenu ->

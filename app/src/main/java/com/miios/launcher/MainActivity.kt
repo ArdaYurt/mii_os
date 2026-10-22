@@ -188,11 +188,16 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             val newer = Updater.check(this@MainActivity, force)
             if (newer == null) {
-                if (force) Toast.makeText(this@MainActivity, "Mii_OS is up to date", Toast.LENGTH_SHORT).show()
+                if (force) {
+                    val name = Updater.currentName(this@MainActivity)
+                    Toast.makeText(this@MainActivity, "Mii_OS $name is up to date", Toast.LENGTH_SHORT).show()
+                }
                 return@launch
             }
             // "Later" holds that version back until the app restarts, unless asked from Settings.
-            if ((force || newer != dismissedUpdate) && update.value is UpdateState.None) update.value = UpdateState.Available(newer)
+            if ((force || newer.code != dismissedUpdate) && update.value is UpdateState.None) {
+                update.value = UpdateState.Available(newer.code, newer.name, newer.notes)
+            }
         }
     }
 

@@ -52,6 +52,10 @@ Mii_OS updates itself. When a new version is out, a pop-up asks **Update** or **
 **Update** and confirm in Android's installer. The first time, Android asks you to allow Mii_OS to
 install apps: turn it on and press Back.
 
+Each version has a number, like **0.4.0**, shown in the pop-up with its highlights and in
+**Settings › Mii_OS Update**. Every version is listed in [`CHANGELOG.md`](CHANGELOG.md) and on the
+[Releases](https://github.com/ArdaYurt/mii_os/releases) page.
+
 The in-app updater needs the builds to be signed with one permanent key. Set that up once by running
 [`tools/signing/make-key.bat`](tools/signing/make-key.bat) on your Windows laptop (see *Building*), then
 uninstall Mii_OS and install it one last time with step 3.
