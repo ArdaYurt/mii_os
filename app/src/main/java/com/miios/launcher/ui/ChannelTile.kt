@@ -189,7 +189,8 @@ private fun LoadedArt(app: InstalledApp, modifier: Modifier) {
     val context = LocalContext.current
     var size by remember { mutableStateOf(IntSize.Zero) }
     var art by remember(app.packageName) { mutableStateOf<ChannelArt?>(null) }
-    LaunchedEffect(app.packageName, size) {
+    val version = ChannelArtLoader.version
+    LaunchedEffect(app.packageName, size, version) {
         if (size.width > 0) {
             art = ChannelArtLoader.cached(app, size.width, size.height)
                 ?: ChannelArtLoader.load(context, app, size.width, size.height)

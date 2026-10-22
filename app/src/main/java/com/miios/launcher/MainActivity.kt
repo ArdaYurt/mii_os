@@ -15,7 +15,9 @@ import com.miios.launcher.data.AppRepository
 import com.miios.launcher.data.HomeLayout
 import com.miios.launcher.data.InstalledApp
 import com.miios.launcher.data.Slot
+import com.miios.launcher.sound.Music
 import com.miios.launcher.sound.Sounds
+import com.miios.launcher.art.ChannelArtLoader
 import com.miios.launcher.art.ChannelStyles
 import com.miios.launcher.tv.TvActivity
 import com.miios.launcher.ui.LauncherActions
@@ -54,12 +56,7 @@ class MainActivity : ComponentActivity() {
 
         override fun openSystemSetting(item: SettingsItem) {
             if (item == SettingsItem.Updates) return checkForUpdate(force = true)
-            if (item == SettingsItem.Sounds) {
-                Sounds.switchTo(!Sounds.enabled)
-                // a chime when turning on, so it's clear right away whether sound comes through
-                Sounds.play(com.miios.launcher.sound.Sfx.Launch)
-                return
-            }
+
             val action = when (item) {
                 SettingsItem.Network -> Settings.ACTION_WIFI_SETTINGS
                 SettingsItem.Display -> Settings.ACTION_DISPLAY_SETTINGS
@@ -157,6 +154,8 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         // picks up a sound pack copied over while Mii_OS was in the background
         Sounds.load(this)
+        Music.play(this)
+        ChannelArtLoader.refresh(this)
         // Refresh in the background on every return so newly installed apps appear without a restart.
         lifecycleScope.launch {
             val loaded = withContext(Dispatchers.IO) { AppRepository.load(this@MainActivity) }
@@ -183,6 +182,11 @@ class MainActivity : ComponentActivity() {
     /** Rebuilds the home screen from the installed apps and the saved arrangement. */
     private fun rearrange() {
         slots.value = layout.arrange(apps.value)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Music.fadeOut()
     }
 
     override fun onNewIntent(intent: Intent) {

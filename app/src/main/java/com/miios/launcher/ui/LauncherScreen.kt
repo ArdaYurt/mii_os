@@ -48,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import com.miios.launcher.data.InstalledApp
 import com.miios.launcher.data.Slot
 import com.miios.launcher.sound.Sfx
+import com.miios.launcher.sound.Music
 import com.miios.launcher.sound.Sounds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -78,7 +79,7 @@ private const val COLS = 4
 private const val ROWS = 3
 private const val PER_PAGE = COLS * ROWS
 
-private enum class Zone { Grid, Dock, Preview, Settings, Update, Folder, Options, Rename }
+private enum class Zone { Grid, Dock, Preview, Settings, Update, Folder, Options, Rename, Sound }
 
 /**
  * The home screen. Focus is driven by one key handler rather than Compose's focus search,
@@ -111,6 +112,10 @@ fun LauncherScreen(
     var moveId by remember { mutableIntStateOf(0) }
 
     val focusRequester = remember { FocusRequester() }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var soundRow by remember { mutableStateOf(SoundRow.Effects) }
+    val soundAnim = remember { Animatable(0f) }
+    val soundVisible by remember { derivedStateOf { soundAnim.value > 0f } }
     // Move mode: a working copy of the home screen while a channel is carried around.
     var moving by remember { mutableStateOf<List<Slot>?>(null) }
     val shown = moving ?: slots
@@ -186,6 +191,7 @@ fun LauncherScreen(
     }
     fun startApp(app: InstalledApp) {
         Sounds.play(Sfx.Launch)
+        Music.fadeOut()
         scope.launch {
             // Wii-style start: push in slightly and wash to white, then hand over to the app
             launchAnim.animateTo(1f, androidx.compose.animation.core.tween(260, easing = Motion.emphasized))
@@ -275,6 +281,7 @@ fun LauncherScreen(
             settingsAnim.snapTo(0f)
             if (zone == Zone.Update) actions.dismissUpdate()
             updateAnim.snapTo(0f)
+            soundAnim.snapTo(0f)
             moving?.let { actions.saveOrder(it) }
             moving = null
             folderAnim.snapTo(0f)
@@ -297,6 +304,11 @@ fun LauncherScreen(
             Zone.Folder -> closeFolder()
             Zone.Options -> { Sounds.play(Sfx.Back); closeOptions() }
             Zone.Rename -> { zone = Zone.Grid; focusRequester.requestFocus() }
+            Zone.Sound -> {
+                zone = Zone.Settings
+                Sounds.play(Sfx.Back)
+                scope.launch { soundAnim.animateTo(0f, Motion.preview) }
+            }
             Zone.Grid -> if (moving != null) dropMoving()
             else -> zone = Zone.Grid
         }
@@ -334,6 +346,15 @@ fun LauncherScreen(
             }
             Zone.Options -> if (dy != 0) optionIndex = (optionIndex + dy).coerceIn(0, options.size - 1)
             Zone.Rename -> Unit
+            Zone.Sound -> {
+                if (dy != 0) soundRow = SoundRow.entries[(soundRow.ordinal + dy).coerceIn(0, SoundRow.entries.size - 1)]
+                if (dx != 0) when (soundRow) {
+                    SoundRow.Effects -> Sounds.switchTo(dx > 0)
+                    SoundRow.EffectsVolume -> Sounds.changeVolume(Sounds.effectsVolume + dx * 0.1f)
+                    SoundRow.Music -> Music.switchTo(context, dx > 0)
+                    SoundRow.MusicVolume -> Music.changeVolume(context, Music.volume + dx * 0.1f)
+                }
+            }
             Zone.Folder -> {
                 val count = openFolder?.apps?.size ?: 0
                 val next = folderIndex + dx + dy * FOLDER_COLS
@@ -382,10 +403,10 @@ fun LauncherScreen(
     }
 
     fun move(dx: Int, dy: Int) {
-        val before = listOf(zone, index, dock, previewButton, settingsIndex, updateButton)
+        val before = listOf(zone, index, dock, previewButton, settingsIndex, updateButton, soundRow, Sounds.effectsVolume, Sounds.enabled)
         val pageBefore = page
         step(dx, dy)
-        val after = listOf(zone, index, dock, previewButton, settingsIndex, updateButton)
+        val after = listOf(zone, index, dock, previewButton, settingsIndex, updateButton, soundRow, Sounds.effectsVolume, Sounds.enabled)
         when {
             zone == Zone.Grid && index / PER_PAGE != pageBefore -> Sounds.play(Sfx.Page)
             before != after -> Sounds.play(Sfx.Move)
@@ -414,7 +435,19 @@ fun LauncherScreen(
             }
             Zone.Settings -> {
                 Sounds.play(Sfx.Select)
-                actions.openSystemSetting(SettingsItem.entries[settingsIndex])
+                val item = SettingsItem.entries[settingsIndex]
+                if (item == SettingsItem.Sounds) {
+                    zone = Zone.Sound
+                    soundRow = SoundRow.Effects
+                    scope.launch { soundAnim.animateTo(1f, Motion.preview) }
+                } else {
+                    actions.openSystemSetting(item)
+                }
+            }
+            Zone.Sound -> when (soundRow) {
+                SoundRow.Effects -> Sounds.switchTo(!Sounds.enabled)
+                SoundRow.Music -> Music.switchTo(context, !Music.enabled)
+                else -> Unit
             }
             Zone.Update -> when {
                 update !is UpdateState.Available -> Unit
@@ -553,6 +586,10 @@ fun LauncherScreen(
 
             if (zone == Zone.Settings || settingsVisible) {
                 SettingsMenu(settingsIndex) { settingsAnim.value }
+            }
+
+            if (zone == Zone.Sound || soundVisible) {
+                SoundPanel(soundRow) { soundAnim.value }
             }
 
             if (zone == Zone.Update || updateVisible) {

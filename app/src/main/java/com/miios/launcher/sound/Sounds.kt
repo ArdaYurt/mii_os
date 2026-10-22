@@ -5,6 +5,7 @@ import android.media.AudioAttributes
 import android.media.SoundPool
 import android.os.SystemClock
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.miios.launcher.R
@@ -41,6 +42,15 @@ object Sounds {
     var enabled by mutableStateOf(true)
         private set
 
+    /** 0..1, the effects slider in Mii_OS Settings. */
+    var effectsVolume by mutableFloatStateOf(0.8f)
+        private set
+
+    fun changeVolume(value: Float) {
+        effectsVolume = value.coerceIn(0f, 1f)
+        prefs?.edit()?.putFloat("effectsVolume", effectsVolume)?.apply()
+    }
+
     fun switchTo(on: Boolean) {
         enabled = on
         prefs?.edit()?.putBoolean("enabled", on)?.apply()
@@ -53,7 +63,11 @@ object Sounds {
     fun load(context: Context) {
         val app = context.applicationContext
         if (prefs == null) {
-            prefs = app.getSharedPreferences("sounds", Context.MODE_PRIVATE).also { enabled = it.getBoolean("enabled", true) }
+            prefs = app.getSharedPreferences("sounds", Context.MODE_PRIVATE).also {
+                enabled = it.getBoolean("enabled", true)
+                effectsVolume = it.getFloat("effectsVolume", 0.8f)
+            }
+            Music.restore(app)
         }
         val dir = folder(app)
         val custom = Sfx.entries.associateWith { sfx -> extensions.map { File(dir, "${sfx.file}.$it") }.firstOrNull { it.isFile } }
@@ -90,7 +104,7 @@ object Sounds {
             if (now - lastMove < 45) return
             lastMove = now
         }
-        val volume = if (sfx == Sfx.Move) 0.8f else 1f
+        val volume = (if (sfx == Sfx.Move) 0.8f else 1f) * effectsVolume
         pool.play(ids[sfx.ordinal], volume, volume, 1, 0, 1f)
     }
 }
