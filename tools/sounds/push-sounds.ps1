@@ -7,6 +7,7 @@
 #   launch   pressing Start
 #   page     turning the page of channels
 #   home     the HOME Menu opening
+#   home-exit  leaving an app for Mii_OS from the HOME Menu
 #   notice   a message, like "update available"
 #   music    the home-screen music (it loops)
 # Any of .mp3 .ogg .wav .m4a .flac works (for example: move.wav, launch.mp3). Leave a sound out to
@@ -34,7 +35,7 @@ if (-not (Test-Path $pack) -and -not ($args -contains "-reset")) {
 }
 
 $reset = $args -contains "-reset"
-$names = "move", "select", "back", "launch", "page", "home", "notice", "music"
+$names = "move", "select", "back", "launch", "page", "home", "home-exit", "notice", "music"
 $files = Get-ChildItem $pack -File | Where-Object { $names -contains $_.BaseName.ToLower() -and $_.Extension -match '^\.(mp3|ogg|wav|m4a|flac)$' }
 if (-not $files -and -not $reset) { throw "No sound files with the right names in $pack." }
 
