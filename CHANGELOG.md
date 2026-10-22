@@ -6,6 +6,10 @@ here, at the top, in the same pull request: the first bullets are what the pop-u
 biggest change first. Pull requests that don't change `VERSION` still reach the box as builds of the
 current version.
 
+## 0.5.1
+
+- Going home from the HOME Menu: the home screen comes out of a soft white glow and settles into place for exactly as long as the home-exit sound, so the two end together
+
 ## 0.4.3
 
 - The home screen looks more like the Wii Menu: plain white, empty places in soft grey with fine lines and a faint "Mii", a grey bottom bar edged in blue, and a segmented clock

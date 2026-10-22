@@ -111,18 +111,19 @@ class HomeButtonService : AccessibilityService() {
 
     private fun goHome() {
         Sounds.play(Sfx.HomeExit)
-        openMiiOs()
+        // the home screen settles in over the sound's length, so both end together
+        openMiiOs(returnMs = Sounds.lengthOf(Sfx.HomeExit).coerceIn(400L, 2500L))
         menu?.hide()
     }
 
-    private fun openMiiOs() {
+    private fun openMiiOs(returnMs: Long = 0L) {
         atHome = true
         startActivity(
             Intent(this, MainActivity::class.java).addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK or
                     Intent.FLAG_ACTIVITY_CLEAR_TOP or
                     Intent.FLAG_ACTIVITY_SINGLE_TOP,
-            ),
+            ).putExtra(MainActivity.EXTRA_RETURN_MS, returnMs),
         )
     }
 
