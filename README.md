@@ -102,6 +102,32 @@ TV channel screen in the launcher.
 | Back | Close the channel screen. |
 | Home | Return to the first page. |
 
+### HOME Menu
+
+Press Home inside any app and the HOME Menu opens over it, as on the Wii. Press Home again or OK on
+**Mii_OS Menu** to go to the home screen; Back (or **Close**) returns to the app. It needs the
+*Mii_OS Home button* accessibility service, which the speed-up script turns on.
+
+### Sounds and your own sound pack
+
+Mii_OS has its own soft clicks and chimes, made for it. To use your own sounds instead, put audio
+files in `tools/sounds/my-sounds` (the folder is made the first time you run the script) named after
+the moment they play, then double-click [`tools/sounds/push-sounds.bat`](tools/sounds/push-sounds.bat):
+
+| File name | Plays when |
+|---|---|
+| `move` | moving between channels and buttons |
+| `select` | opening a channel, a button or Settings |
+| `back` | closing something |
+| `launch` | pressing Start |
+| `page` | turning the page of channels |
+| `home` | the HOME Menu opens |
+| `notice` | a message such as "update available" |
+
+Any of `.mp3`, `.ogg`, `.wav`, `.m4a` or `.flac` works, and you can replace just some of them. The
+files are copied to your box only and are never added to this repository. `reset-sounds.bat` puts
+Mii_OS's own sounds back.
+
 ## Design and speed
 
 - **Speed first.** Release builds are minified and ship Compose's startup profiles. Nothing on the

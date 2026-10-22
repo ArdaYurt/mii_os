@@ -33,3 +33,6 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# Your own sound pack stays on your computer and box, never in this public repository
+tools/sounds/my-sounds/

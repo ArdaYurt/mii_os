@@ -28,7 +28,9 @@ jobs:
           KEYSTORE_BASE64: ${{ secrets.MII_KEYSTORE_BASE64 }}
           MII_KEYSTORE_PASSWORD: ${{ secrets.MII_KEYSTORE_PASSWORD }}
           MII_KEY_ALIAS: ${{ secrets.MII_KEY_ALIAS }}
-        if: env.KEYSTORE_BASE64 != ''
+        # Only main's builds are installed, so only they need the permanent key; pull requests
+        # build with the debug key and can't be broken by a key problem.
+        if: env.KEYSTORE_BASE64 != '' && github.event_name != 'pull_request'
         run: |
           echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/mii.jks"
           echo "MII_KEYSTORE_PATH=$RUNNER_TEMP/mii.jks" >> "$GITHUB_ENV"
