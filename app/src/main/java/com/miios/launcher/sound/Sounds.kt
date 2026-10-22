@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.miios.launcher.R
+import com.miios.launcher.storage.PackFolders
 import java.io.File
 
 /** The moments Mii_OS makes a sound. [file] is the name a custom sound pack uses for it. */
@@ -26,7 +27,7 @@ enum class Sfx(val file: String, val builtIn: Int) {
  * Mii_OS's UI sounds. The built-in ones are Mii_OS's own, synthesized for it.
  *
  * Sound pack: put audio files named after an [Sfx] (move.mp3, select.wav, launch.ogg, ...) in
- * Android/data/com.miios.launcher/files/sounds on the box, and Mii_OS plays those instead. They
+ * /sdcard/Mii_OS/sounds on the box, and Mii_OS plays those instead. They
  * stay on the box; tools/sounds/push-sounds.bat copies a folder there from a laptop.
  */
 object Sounds {
@@ -56,7 +57,8 @@ object Sounds {
         prefs?.edit()?.putBoolean("enabled", on)?.apply()
     }
 
-    fun folder(context: Context): File = File(context.getExternalFilesDir(null), "sounds")
+    /** Your own file for [name] from the sound pack, if there is one. */
+    fun custom(context: Context, name: String): File? = PackFolders.find(context, "sounds", name, extensions)
 
     /** Loads the sounds, or reloads them when the sound pack folder changed. Cheap when nothing did. */
     @Synchronized
@@ -69,8 +71,7 @@ object Sounds {
             }
             Music.restore(app)
         }
-        val dir = folder(app)
-        val custom = Sfx.entries.associateWith { sfx -> extensions.map { File(dir, "${sfx.file}.$it") }.firstOrNull { it.isFile } }
+        val custom = Sfx.entries.associateWith { sfx -> custom(app, sfx.file) }
         val stamp = custom.values.sumOf { it?.lastModified()?.plus(it.length()) ?: 0L }
         if (pool != null && stamp == packStamp) return
         packStamp = stamp
@@ -92,7 +93,7 @@ object Sounds {
         }
         pool = next
         // make sure the folder exists, so it's easy to find when copying a pack over
-        dir.mkdirs()
+        PackFolders.own(app, "sounds").mkdirs()
     }
 
     fun play(sfx: Sfx) {

@@ -91,6 +91,8 @@ type "%TEMP%\mii-install.txt"
 exit /b 1
 :install_ok
 echo    OK Mii_OS installed
+rem Lets Mii_OS read your own logos and sounds from /sdcard/Mii_OS.
+adb -s %S% shell pm grant com.miios.launcher android.permission.READ_EXTERNAL_STORAGE >nul 2>&1
 rem After a full speed-up Mii_OS is the only home; an uninstall above drops that choice, so set it again.
 adb -s %S% shell pm list packages -d 2>nul | findstr /c:"launcherx" >nul && adb -s %S% shell cmd package set-home-activity com.miios.launcher/.MainActivity >nul 2>&1
 call :compile_mii

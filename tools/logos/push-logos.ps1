@@ -12,7 +12,9 @@
 $ErrorActionPreference = "Stop"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $pack = Join-Path $here "my-logos"
-$target = "/sdcard/Android/data/com.miios.launcher/files/logos/"
+# A shared folder: some boxes refuse adb writes into Mii_OS's own Android/data folder.
+$target = "/sdcard/Mii_OS/logos/"
+$oldTarget = "/sdcard/Android/data/com.miios.launcher/files/logos/"
 $reset = $args -contains "-reset"
 
 $adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
@@ -35,11 +37,15 @@ if (-not $reset) {
     if (-not $files) { throw "No PNG, WebP or JPG images in $pack." }
 }
 
-$ip = Read-Host "Your TV box's IP address (Settings > Network on the box)"
+# The box's IP can be given as an argument (push-logos.ps1 192.168.x.x); otherwise it asks.
+$ip = $args | Where-Object { $_ -notlike "-*" } | Select-Object -First 1
+if (-not $ip) { $ip = Read-Host "Your TV box's IP address (Settings > Network on the box)" }
 & $adb connect "${ip}:5555" | Out-Host
 & $adb -s "${ip}:5555" shell mkdir -p $target | Out-Null
+# Lets Mii_OS read the shared folder (asked once; harmless to repeat).
+& $adb -s "${ip}:5555" shell pm grant com.miios.launcher android.permission.READ_EXTERNAL_STORAGE | Out-Null
 if ($reset) {
-    & $adb -s "${ip}:5555" shell "rm -f ${target}*" | Out-Null
+    & $adb -s "${ip}:5555" shell "rm -f ${target}* ${oldTarget}*" 2>$null | Out-Null
     Write-Host "Removed your logos. Mii_OS shows its own art again." -ForegroundColor Green
     exit 0
 }

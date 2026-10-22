@@ -11,7 +11,7 @@ import androidx.core.graphics.drawable.toBitmap
 import com.miios.launcher.data.InstalledApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
+import com.miios.launcher.storage.PackFolders
 import java.io.IOException
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -58,12 +58,10 @@ object ChannelArtLoader {
      * the channel (plex.png, apple-tv.png, prime-video.png...) or the app's package name. They stay
      * on the box; tools/logos/push-logos.bat copies them from a laptop.
      */
-    fun logoFolder(context: Context): File = File(context.getExternalFilesDir(null), "logos")
-
     /** Notices a changed logo pack (called on resume). */
     fun refresh(context: Context) {
-        val dir = logoFolder(context).apply { mkdirs() }
-        val stamp = dir.listFiles()?.sumOf { it.lastModified() + it.length() } ?: 0L
+        PackFolders.own(context, "logos").mkdirs()
+        val stamp = PackFolders.stamp(context, "logos")
         if (packStamp != -1L && stamp != packStamp) {
             cache.evictAll()
             version++
@@ -74,9 +72,8 @@ object ChannelArtLoader {
     private val imageTypes = listOf("png", "webp", "jpg", "jpeg")
 
     private fun fromLogoPack(context: Context, app: InstalledApp, width: Int, height: Int): ChannelArt? {
-        val dir = logoFolder(context)
         val names = listOf(app.packageName) + ChannelStyles.aliasesFor(app.packageName) + slug(app.label)
-        val file = names.flatMap { n -> imageTypes.map { File(dir, "$n.$it") } }.firstOrNull { it.isFile } ?: return null
+        val file = names.firstNotNullOfOrNull { PackFolders.find(context, "logos", it, imageTypes) } ?: return null
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeFile(file.path, bounds)
         var sample = 1

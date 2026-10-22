@@ -16,6 +16,7 @@ import com.miios.launcher.data.HomeLayout
 import com.miios.launcher.data.InstalledApp
 import com.miios.launcher.data.Slot
 import com.miios.launcher.service.HomeButtonService
+import com.miios.launcher.storage.PackFolders
 import com.miios.launcher.sound.Music
 import com.miios.launcher.sound.Sounds
 import com.miios.launcher.art.ChannelArtLoader
@@ -163,12 +164,41 @@ class MainActivity : ComponentActivity() {
             else "Choose \"Mii_OS Home button\", turn it on, then press Back",
             Toast.LENGTH_LONG,
         ).show()
-        start(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        // Google TV builds differ: the standard Accessibility link, the TV Settings app's own
+        // Accessibility page, then the main Settings (Device Preferences › Accessibility).
+        val tvSettings = "com.android.tv.settings"
+        val candidates = listOf(
+            Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS),
+            Intent().setClassName(tvSettings, "$tvSettings.accessibility.AccessibilityActivity"),
+            Intent().setClassName(tvSettings, "$tvSettings.accessibility.AccessibilityServicesActivity"),
+        )
+        val found = candidates.firstOrNull { it.resolveActivity(packageManager) != null }
+        if (found == null || !tryStart(found.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))) {
+            Toast.makeText(this, "Open Device Preferences › Accessibility › Mii_OS Home button", Toast.LENGTH_LONG).show()
+            start(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }
+    }
+
+    /** Asks once to read your own logos and sounds from /sdcard/Mii_OS (the laptop scripts also grant it). */
+    private fun askForPackAccess() {
+        if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == android.content.pm.PackageManager.PERMISSION_GRANTED) return
+        val prefs = getSharedPreferences("packs", MODE_PRIVATE)
+        if (prefs.getBoolean("asked", false)) return
+        if (!PackFolders.shared("logos").exists() && !PackFolders.shared("sounds").exists()) return
+        prefs.edit().putBoolean("asked", true).apply()
+        requestPermissions(arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE), 1)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        Sounds.load(this)
+        ChannelArtLoader.refresh(this)
     }
 
     override fun onResume() {
         super.onResume()
         HomeButtonService.refresh(this)
+        askForPackAccess()
         // picks up a sound pack copied over while Mii_OS was in the background
         Sounds.load(this)
         Music.play(this)

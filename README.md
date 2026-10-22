@@ -153,7 +153,9 @@ looks sharp) as PNG, WebP or JPG, and name it after the channel: `apple-tv`, `yo
 `prime-video`, `stremio`, `screen-share`, `tv`, `disney-plus`, `mubi`, `hbo-max`, `spotify`, `kick`,
 or any app's name in lowercase with dashes (`Pluto TV` → `pluto-tv.png`). Put the images in
 `tools/logos/my-logos` and double-click [`tools/logos/push-logos.bat`](tools/logos/push-logos.bat).
-They go to your box only; `reset-logos.bat` brings back Mii_OS's art.
+It copies them to `/sdcard/Mii_OS/logos` on the box and lets Mii_OS read that folder. They go to
+your box only; `reset-logos.bat` brings back Mii_OS's art. Sound packs work the same way, in
+`/sdcard/Mii_OS/sounds`.
 
 ## Design and speed
 

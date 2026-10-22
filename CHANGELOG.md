@@ -11,9 +11,9 @@ current version.
 - Menu music, with music and effects volume in Settings › Sounds
 - A pointing hand and Wii-style page arrows
 - Options on every channel: move it, make folders, app info
-- Settings › HOME Menu, to switch the HOME Menu on
+- Settings › HOME Menu, to switch the HOME Menu on (works on Google TV's settings too)
 - Screen Share channel for iPhone and iPad (AirScreen)
-- Your own logos and sounds from the laptop
+- Your own logos and sounds, copied from the laptop to the Mii_OS folder on the box
 - Fixed: the update pop-up looping on "Install unknown apps"
 - Version numbers, with these notes in the update pop-up
 
