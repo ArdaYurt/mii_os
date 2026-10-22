@@ -6,6 +6,10 @@ here, at the top, in the same pull request: the first bullets are what the pop-u
 biggest change first. Pull requests that don't change `VERSION` still reach the box as builds of the
 current version.
 
+## 0.6.3
+
+- Nuvio, an open-source alternative to Stremio that's lighter on the box, has its own channel next to Stremio's: open it and press Install to get it from the Play Store. It plays the same add-ons; add them in Nuvio's Settings › Addons
+
 ## 0.6.2
 
 - The remote's Netflix, YouTube and Prime Video buttons work again with Mii_OS as home, and can be set to open something else in Settings › Remote buttons

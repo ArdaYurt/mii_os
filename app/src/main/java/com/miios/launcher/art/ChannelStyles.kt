@@ -30,6 +30,12 @@ object ChannelStyles {
     const val PRIME_VIDEO = "com.amazon.amazonvideo.livingroom"
     const val STREMIO = "com.stremio.one"
     /**
+     * Nuvio TV: an open-source (GPL-3.0) app for Stremio add-ons, built natively for Android TV.
+     * https://github.com/NuvioMedia/NuvioTV. Installed from the Play Store: that build has Nuvio's
+     * scraper plugins switched off, which the GitHub build turns on.
+     */
+    const val NUVIO = "com.nuvio.app"
+    /**
      * Screen Share: the open-source AirPlay receiver by jqssun (GPL-3.0, built on UxPlay), installed
      * from its GitHub releases. https://github.com/jqssun/android-airplay-server
      */
@@ -57,6 +63,12 @@ object ChannelStyles {
         ),
         PRIME_VIDEO to ChannelStyle("Prime Video", Color(0xFF3CC0F0), Color(0xFF0A68A0), Color.White, MiiIcon.PlayCircle),
         STREMIO to ChannelStyle("Stremio", Color(0xFF8A6CF7), Color(0xFF4325B0), Color.White, MiiIcon.Film),
+        NUVIO to ChannelStyle(
+            "Nuvio", Color(0xFF2A3350), Color(0xFF0C1022), Color.White, MiiIcon.Film,
+            blurb = "An open-source app for your Stremio add-ons, made for the TV remote and lighter than Stremio. " +
+                "Add each add-on by its install link in Nuvio's Settings › Addons.",
+            stageTop = Color(0xFF34406A), stageBottom = Color(0xFF080B18),
+        ),
         SCREEN_SHARE to ChannelStyle(
             "Screen Share", Color(0xFF8ADAF8), Color(0xFF2F8FD8), Color.White, MiiIcon.Screens,
             blurb = "Show your iPhone or iPad on the TV with AirPlay. Uses a free, open-source receiver " +
@@ -90,6 +102,7 @@ object ChannelStyles {
         "hbo max" to MAX,
         "spotify" to SPOTIFY,
         "kick" to KICK,
+        "nuvio" to NUVIO,
     )
 
     /** Short names a logo pack can use for a channel, besides its package name and app name. */
@@ -100,6 +113,7 @@ object ChannelStyles {
         PLEZY to listOf("plezy"),
         PRIME_VIDEO to listOf("prime-video", "prime"),
         STREMIO to listOf("stremio"),
+        NUVIO to listOf("nuvio"),
         SCREEN_SHARE to listOf("screen-share", "airplay", "airscreen"),
         TV to listOf("tv"),
         DISNEY_PLUS to listOf("disney-plus", "disney"),
