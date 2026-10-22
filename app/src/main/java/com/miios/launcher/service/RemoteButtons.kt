@@ -6,15 +6,21 @@ import android.view.KeyEvent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.miios.launcher.art.ChannelStyles
 import com.miios.launcher.tv.TvActivity
 
 /**
- * Remote buttons Mii_OS can give a new job. Each one is known by the key codes it sends; a box
+ * Remote buttons Mii_OS can give a job. Each one is known by the key codes it sends; a box
  * whose remote sends something else learns it in Settings › Remote buttons.
  */
 enum class RemoteKey(val title: String, val defaultCodes: Set<Int>, val defaultTarget: String?) {
-    // The Mi Box S remote's key layout (Vendor_2717_Product_32b9.kl) sends TV+ as BUTTON_5.
+    // The Mi Box S remote's key layout (Vendor_2717_Product_32b9.kl) sends its shortcut buttons
+    // as gamepad buttons. Xiaomi's handler for them (partnercustomizer) starts apps through the
+    // stock home, which fails once the speed-up has switched it off, so Mii_OS opens them itself.
     TvPlus("TV+ button", setOf(KeyEvent.KEYCODE_BUTTON_5), TvActivity.CHANNEL_ID),
+    Netflix("Netflix button", setOf(KeyEvent.KEYCODE_BUTTON_6), "com.netflix.ninja"),
+    YouTube("YouTube button", setOf(KeyEvent.KEYCODE_BUTTON_3), ChannelStyles.YOUTUBE),
+    PrimeVideo("Prime Video button", setOf(KeyEvent.KEYCODE_BUTTON_7), ChannelStyles.PRIME_VIDEO),
     // On the Mi Box S the Assistant button goes over the remote's voice link, not as a key, so
     // these only help on remotes that do send it as a key.
     Assistant(
