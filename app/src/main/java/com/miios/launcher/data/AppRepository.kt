@@ -67,13 +67,15 @@ object AppRepository {
 
     /**
      * Favourite channels: always shown first, in this order, with Mii_OS art.
-     * Screen Share is an open-source AirPlay receiver, for iPhone and iPad screen sharing.
+     * Plezy is an open-source Plex client. Screen Share is an open-source AirPlay receiver, for
+     * iPhone and iPad screen sharing.
      * TV is Mii_OS's own live IPTV channel.
      */
     val pinned = listOf(
         ChannelStyles.APPLE_TV,
         ChannelStyles.YOUTUBE,
         ChannelStyles.PLEX,
+        ChannelStyles.PLEZY,
         ChannelStyles.PRIME_VIDEO,
         ChannelStyles.STREMIO,
         ChannelStyles.SCREEN_SHARE,

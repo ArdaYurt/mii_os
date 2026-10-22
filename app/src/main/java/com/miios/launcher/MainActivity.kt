@@ -27,16 +27,13 @@ import com.miios.launcher.ui.LauncherScreen
 import com.miios.launcher.ui.SettingsItem
 import com.miios.launcher.ui.UpdateState
 import com.miios.launcher.update.Downloads
+import com.miios.launcher.update.GitHubApps
 import com.miios.launcher.update.Updater
 import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-/** The AirPlay receiver's newest release on GitHub (jqssun/android-airplay-server, GPL-3.0). */
-private const val SCREEN_SHARE_APK =
-    "https://github.com/jqssun/android-airplay-server/releases/latest/download/app-release.apk"
 
 class MainActivity : ComponentActivity() {
 
@@ -76,7 +73,7 @@ class MainActivity : ComponentActivity() {
                 SettingsItem.Apps -> Settings.ACTION_APPLICATION_SETTINGS
                 SettingsItem.DateTime -> Settings.ACTION_DATE_SETTINGS
                 SettingsItem.System -> Settings.ACTION_SETTINGS
-                SettingsItem.Updates, SettingsItem.Sounds, SettingsItem.HomeMenu -> return
+                SettingsItem.Updates, SettingsItem.Sounds, SettingsItem.HomeMenu, SettingsItem.Remote -> return
             }
             // Google TV doesn't have every settings page; fall back to the main one.
             val intent = Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -132,21 +129,20 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** Installs a favourite channel: Screen Share straight from GitHub, the rest from the Play Store. */
+    /** Installs a favourite channel: open-source ones (Screen Share, Plezy) straight from GitHub, the rest from the Play Store. */
     private fun install(pkg: String) {
-        if (pkg == ChannelStyles.SCREEN_SHARE) installScreenShare() else openStore(pkg)
+        if (GitHubApps.sourceFor(pkg) != null) installFromGitHub(pkg) else openStore(pkg)
     }
 
     /**
-     * Downloads the open-source AirPlay receiver from its developer's GitHub releases and installs it;
+     * Downloads an open-source channel from its developer's GitHub releases and installs it;
      * Android's installer asks first. No Play Store, no account. The download bar shows how it goes.
      */
-    private fun installScreenShare() {
-        if (Downloads.activeFor(ChannelStyles.SCREEN_SHARE) != null) return
+    private fun installFromGitHub(pkg: String) {
+        val source = GitHubApps.sourceFor(pkg) ?: return
+        if (Downloads.activeFor(pkg) != null) return
         if (!Updater.canInstall(this, retry = "choose Install again")) return
-        lifecycleScope.launch {
-            Updater.installFrom(this@MainActivity, java.net.URL(SCREEN_SHARE_APK), ChannelStyles.SCREEN_SHARE, "AirPlay Receiver")
-        }
+        lifecycleScope.launch { Updater.installFrom(this@MainActivity, source.url, pkg, source.title) }
     }
 
     /** Play Store page for a favourite channel that isn't installed yet. */
@@ -160,6 +156,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         CrashLog.install(this)
+        com.miios.launcher.service.RemoteButtons.load(this)
         takeReturn(intent)
         CrashLog.takeLast(this)?.let {
             Toast.makeText(this, "Mii_OS restarted after an error: $it", Toast.LENGTH_LONG).show()

@@ -34,6 +34,7 @@ class HomeButtonService : AccessibilityService() {
         super.onServiceConnected()
         menu = HomeMenu(this)
         Sounds.load(this)
+        RemoteButtons.load(this)
     }
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
@@ -57,6 +58,8 @@ class HomeButtonService : AccessibilityService() {
             }
             return true
         }
+        // TV+ and other buttons the owner gave a new job in Settings › Remote Buttons
+        if (RemoteButtons.onKey(this, event)) return true
         if (event.keyCode != KeyEvent.KEYCODE_HOME) return false
         if (up) {
             if (atHome) {

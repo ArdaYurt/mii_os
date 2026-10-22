@@ -62,9 +62,27 @@ uninstall Mii_OS and install it one last time with step 3.
 
 ### Favourite channels
 
-Apple TV, YouTube, Plex, Prime Video, Stremio and Screen Share always have the first channels,
+Apple TV, YouTube, Plex, Plezy, Prime Video, Stremio and Screen Share always have the first channels,
 with Mii_OS's own art. If one isn't installed yet its channel is greyed out with an **Install** tag;
-open it and press **Install** to go to its Play Store page (Screen Share installs from GitHub instead).
+open it and press **Install** to go to its Play Store page (Plezy and Screen Share install from GitHub
+instead).
+
+### Plezy (open-source Plex)
+
+[Plezy](https://github.com/edde746/plezy) by edde746 is an open-source Plex client (GPL-3.0) with no
+ads: direct play of your files as they are, 4K, HDR and Dolby Vision, and a TV layout for the remote.
+Open the Plezy channel and press **Install**: Mii_OS downloads the newest release for the box's
+processor from that GitHub page, unpacks it and Android asks you to confirm. Sign in with your Plex
+account. It's a separate app with its own licence and updates; Mii_OS never bundles its code. The
+official Plex channel stays, so you can keep whichever you like.
+
+### Remote buttons
+
+Settings › **Remote Buttons** gives spare remote buttons, like **TV+**, a new job: open TV, Plex
+(Plezy if installed, else the Plex app), Screen Share or the Mii_OS home screen. Press OK on a row,
+then the button on the remote, then ← → to pick what it opens. It needs the HOME Menu switched on,
+since that's what listens to the remote. Buttons the box handles itself before any app sees them
+can't be changed; if pressing one does nothing while the row waits, that button is one of those.
 
 ### iPhone and iPad screen sharing
 
