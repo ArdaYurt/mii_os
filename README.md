@@ -76,14 +76,6 @@ processor from that GitHub page, unpacks it and Android asks you to confirm. Sig
 account. It's a separate app with its own licence and updates; Mii_OS never bundles its code. The
 official Plex channel stays, so you can keep whichever you like.
 
-### Remote buttons
-
-Settings › **Remote Buttons** gives spare remote buttons, like **TV+**, a new job: open TV, Plex
-(Plezy if installed, else the Plex app), Screen Share or the Mii_OS home screen. Press OK on a row,
-then the button on the remote, then ← → to pick what it opens. It needs the HOME Menu switched on,
-since that's what listens to the remote. Buttons the box handles itself before any app sees them
-can't be changed; if pressing one does nothing while the row waits, that button is one of those.
-
 ### iPhone and iPad screen sharing
 
 The box can't receive AirPlay on its own, so Screen Share uses

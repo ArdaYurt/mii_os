@@ -32,7 +32,6 @@ enum class SettingsItem(val title: String, val detail: String, val icon: MiiIcon
     DateTime("Date & Time", "Clock and time zone", MiiIcon.Clock),
     Sounds("Sounds", "Clicks and chimes", MiiIcon.PlayCircle),
     HomeMenu("HOME Menu", "The pop-up when you press Home in an app", MiiIcon.Home),
-    Remote("Remote Buttons", "Make TV+ or other buttons open TV or Plex", MiiIcon.Remote),
     Updates("Mii_OS Update", "Check for a new version", MiiIcon.Download),
     System("All Settings", "Everything else on the box", MiiIcon.Sliders),
 }

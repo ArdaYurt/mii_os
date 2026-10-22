@@ -82,7 +82,7 @@ private const val COLS = 4
 private const val ROWS = 3
 private const val PER_PAGE = COLS * ROWS
 
-private enum class Zone { Grid, Dock, Preview, Settings, Update, Folder, Options, Rename, Sound, Remote }
+private enum class Zone { Grid, Dock, Preview, Settings, Update, Folder, Options, Rename, Sound }
 
 /**
  * The home screen. Focus is driven by one key handler rather than Compose's focus search,
@@ -122,9 +122,6 @@ fun LauncherScreen(
     var soundRow by remember { mutableStateOf(SoundRow.Effects) }
     val soundAnim = remember { Animatable(0f) }
     val soundVisible by remember { derivedStateOf { soundAnim.value > 0f } }
-    var remoteRow by remember { mutableIntStateOf(0) }
-    val remoteAnim = remember { Animatable(0f) }
-    val remoteVisible by remember { derivedStateOf { remoteAnim.value > 0f } }
     // Move mode: a working copy of the home screen while a channel is carried around.
     var moving by remember { mutableStateOf<List<Slot>?>(null) }
     // The home screen as it was when the move started, and where the carried channel came from.
@@ -327,8 +324,6 @@ fun LauncherScreen(
             if (zone == Zone.Update) actions.dismissUpdate()
             updateAnim.snapTo(0f)
             soundAnim.snapTo(0f)
-            remoteAnim.snapTo(0f)
-            com.miios.launcher.service.RemoteButtons.stopLearning()
             moving?.let { actions.saveOrder(it) }
             moving = null
             folderAnim.snapTo(0f)
@@ -355,12 +350,6 @@ fun LauncherScreen(
                 zone = Zone.Settings
                 Sounds.play(Sfx.Back)
                 scope.launch { soundAnim.animateTo(0f, Motion.preview) }
-            }
-            Zone.Remote -> {
-                com.miios.launcher.service.RemoteButtons.stopLearning()
-                zone = Zone.Settings
-                Sounds.play(Sfx.Back)
-                scope.launch { remoteAnim.animateTo(0f, Motion.preview) }
             }
             Zone.Grid -> if (moving != null) dropMoving()
             else -> zone = Zone.Grid
@@ -408,14 +397,6 @@ fun LauncherScreen(
                     SoundRow.Music -> Music.switchTo(context, dx > 0)
                     SoundRow.MusicVolume -> Music.changeVolume(context, Music.volume + dx * 0.1f)
                 }
-            }
-            Zone.Remote -> {
-                val buttons = com.miios.launcher.service.RemoteButtons
-                if (dy != 0) {
-                    buttons.stopLearning()
-                    remoteRow = (remoteRow + dy).coerceIn(0, buttons.COUNT - 1)
-                }
-                if (dx != 0 && buttons.buttons[remoteRow].code != 0) buttons.changeTarget(context, remoteRow, dx)
             }
             Zone.Folder -> {
                 val count = openFolder?.apps?.size ?: 0
@@ -471,10 +452,10 @@ fun LauncherScreen(
     }
 
     fun move(dx: Int, dy: Int) {
-        val before = listOf(zone, index, dock, previewButton, settingsIndex, updateButton, soundRow, Sounds.effectsVolume, Sounds.enabled, remoteRow, com.miios.launcher.service.RemoteButtons.buttons)
+        val before = listOf(zone, index, dock, previewButton, settingsIndex, updateButton, soundRow, Sounds.effectsVolume, Sounds.enabled)
         val pageBefore = page
         step(dx, dy)
-        val after = listOf(zone, index, dock, previewButton, settingsIndex, updateButton, soundRow, Sounds.effectsVolume, Sounds.enabled, remoteRow, com.miios.launcher.service.RemoteButtons.buttons)
+        val after = listOf(zone, index, dock, previewButton, settingsIndex, updateButton, soundRow, Sounds.effectsVolume, Sounds.enabled)
         when {
             zone == Zone.Grid && index / PER_PAGE != pageBefore -> Sounds.play(Sfx.Page)
             before != after -> Sounds.play(Sfx.Move)
@@ -510,18 +491,9 @@ fun LauncherScreen(
                     zone = Zone.Sound
                     soundRow = SoundRow.Effects
                     scope.launch { soundAnim.animateTo(1f, Motion.preview) }
-                } else if (item == SettingsItem.Remote) {
-                    zone = Zone.Remote
-                    remoteRow = 0
-                    scope.launch { remoteAnim.animateTo(1f, Motion.preview) }
                 } else {
                     actions.openSystemSetting(item)
                 }
-            }
-            Zone.Remote -> {
-                Sounds.play(Sfx.Select)
-                val buttons = com.miios.launcher.service.RemoteButtons
-                if (buttons.learning == remoteRow) buttons.stopLearning() else buttons.learn(remoteRow)
             }
             Zone.Sound -> when (soundRow) {
                 SoundRow.Effects -> Sounds.switchTo(!Sounds.enabled)
@@ -728,10 +700,6 @@ fun LauncherScreen(
 
             if (zone == Zone.Sound || soundVisible) {
                 SoundPanel(soundRow) { soundAnim.value }
-            }
-
-            if (zone == Zone.Remote || remoteVisible) {
-                RemotePanel(if (zone == Zone.Remote) remoteRow else -1) { remoteAnim.value }
             }
 
             // the download manager: what's downloading or installing, over the tips line above the dock

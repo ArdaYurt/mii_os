@@ -73,7 +73,7 @@ fun SoundPanel(focused: SoundRow, progress: () -> Float) {
 }
 
 @Composable
-internal fun RowFrame(focused: Boolean, content: @Composable () -> Unit) {
+private fun RowFrame(focused: Boolean, content: @Composable () -> Unit) {
     val unit = LocalUnit.current
     val colors = LocalMiiColors.current
     val ring by animateFloatAsState(if (focused) 1f else 0f, Motion.glow, label = "soundRing")
