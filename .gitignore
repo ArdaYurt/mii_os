@@ -37,3 +37,5 @@ google-services.json
 # Your own sound pack stays on your computer and box, never in this public repository
 tools/sounds/my-sounds/
 tools/logos/my-logos/
+tools/font/my-font/
+tools/cursor/my-cursor/

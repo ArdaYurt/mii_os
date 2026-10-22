@@ -26,19 +26,34 @@ object Updater {
     private const val PREFS = "updater"
     private const val CHECK_EVERY_MS = 30 * 60 * 1000L
 
-    /** A newer build than the one running, or null. Checks at most every few hours. */
-    suspend fun check(context: Context, force: Boolean = false): Int? = withContext(Dispatchers.IO) {
+    /** A published build: [code] orders builds, [name] is the version people see, [notes] its highlights. */
+    data class Release(val code: Int, val name: String, val notes: List<String>)
+
+    /** A newer build than the one running, or null. Checks at most every half hour. */
+    suspend fun check(context: Context, force: Boolean = false): Release? = withContext(Dispatchers.IO) {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val now = System.currentTimeMillis()
-        if (!force && now - prefs.getLong("checkedAt", 0L) < CHECK_EVERY_MS) {
-            return@withContext prefs.getInt("latest", 0).takeIf { it > current(context) }
-        }
-        val latest = runCatching {
-            JSONObject(fetch(URL(BASE + "version.json")).bufferedReader().use { it.readText() }).getInt("versionCode")
+        val json = if (!force && now - prefs.getLong("checkedAt", 0L) < CHECK_EVERY_MS) {
+            prefs.getString("latestJson", null)
+        } else {
+            runCatching { fetch(URL(BASE + "version.json")).bufferedReader().use { it.readText() } }.getOrNull()
+                ?.also { prefs.edit().putLong("checkedAt", now).putString("latestJson", it).apply() }
+        } ?: return@withContext null
+        val release = runCatching {
+            val obj = JSONObject(json)
+            val notes = obj.optJSONArray("notes")
+            Release(
+                code = obj.getInt("versionCode"),
+                name = obj.optString("versionName").ifEmpty { "new version" },
+                notes = List(notes?.length() ?: 0) { notes!!.getString(it) },
+            )
         }.getOrNull() ?: return@withContext null
-        prefs.edit().putLong("checkedAt", now).putInt("latest", latest).apply()
-        latest.takeIf { it > current(context) }
+        release.takeIf { it.code > current(context) }
     }
+
+    /** The version running now, as people see it. */
+    fun currentName(context: Context): String =
+        context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
 
     /**
      * Android only installs apps from sources the owner has allowed. Mii_OS asks once; this opens

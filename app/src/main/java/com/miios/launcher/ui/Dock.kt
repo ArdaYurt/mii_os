@@ -129,7 +129,7 @@ fun Label(text: String, size: Dp, color: Color, weight: FontWeight, modifier: Mo
     BasicText(
         text,
         modifier,
-        style = TextStyle(color = color, fontSize = fontSize, fontWeight = weight, textAlign = TextAlign.Center),
+        style = TextStyle(color = color, fontSize = fontSize, fontWeight = weight, textAlign = TextAlign.Center, fontFamily = MiiFont.family),
         maxLines = 1,
     )
 }

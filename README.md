@@ -52,6 +52,10 @@ Mii_OS updates itself. When a new version is out, a pop-up asks **Update** or **
 **Update** and confirm in Android's installer. The first time, Android asks you to allow Mii_OS to
 install apps: turn it on and press Back.
 
+Each version has a number, like **0.4.0**, shown in the pop-up with its highlights and in
+**Settings › Mii_OS Update**. Every version is listed in [`CHANGELOG.md`](CHANGELOG.md) and on the
+[Releases](https://github.com/ArdaYurt/mii_os/releases) page.
+
 The in-app updater needs the builds to be signed with one permanent key. Set that up once by running
 [`tools/signing/make-key.bat`](tools/signing/make-key.bat) on your Windows laptop (see *Building*), then
 uninstall Mii_OS and install it one last time with step 3.
@@ -113,7 +117,8 @@ alone. Steps are in [`tools/speedup/README.md`](tools/speedup/README.md).
 ### HOME Menu
 
 Press Home inside any app and the HOME Menu opens over it, as on the Wii. Press Home again or OK on
-**Mii_OS Menu** to go to the home screen; Back (or **Close**) returns to the app. It needs the
+**Mii_OS Menu** to go to the home screen; Back (or **Close**) returns to the app. The app stays
+visible behind it, softly blurred and dimmed. It needs the
 *Mii_OS Home button* accessibility service. To turn it on, open **Settings › HOME Menu** in Mii_OS:
 it takes you to the box's Accessibility settings, where you choose *Mii_OS Home button* and switch
 it on (Android only lets the box's owner do that). The speed-up script can also turn it on.
@@ -149,7 +154,22 @@ looks sharp) as PNG, WebP or JPG, and name it after the channel: `apple-tv`, `yo
 `prime-video`, `stremio`, `screen-share`, `tv`, `disney-plus`, `mubi`, `hbo-max`, `spotify`, `kick`,
 or any app's name in lowercase with dashes (`Pluto TV` → `pluto-tv.png`). Put the images in
 `tools/logos/my-logos` and double-click [`tools/logos/push-logos.bat`](tools/logos/push-logos.bat).
-They go to your box only; `reset-logos.bat` brings back Mii_OS's art.
+It copies them to `/sdcard/Mii_OS/logos` on the box and lets Mii_OS read that folder. They go to
+your box only; `reset-logos.bat` brings back Mii_OS's art. Sound packs work the same way, in
+`/sdcard/Mii_OS/sounds`.
+
+### Your own font and pointer
+
+Mii_OS can use your own font and your own hand pointer instead of its own; they're your files and
+stay on your box.
+
+- **Font:** put one `.ttf` or `.otf` file in `tools/font/my-font` and double-click
+  [`tools/font/push-font.bat`](tools/font/push-font.bat). All of Mii_OS's text uses it, the HOME Menu
+  included. `reset-font.bat` goes back to the box's font.
+- **Pointer:** put a `hand.png` in `tools/cursor/my-cursor` (transparent background, about 256 pixels
+  wide, pointing up with the fingertip touching the top edge a little left of centre) and
+  double-click [`tools/cursor/push-cursor.bat`](tools/cursor/push-cursor.bat). `reset-cursor.bat`
+  brings back Mii_OS's hand.
 
 ## Design and speed
 

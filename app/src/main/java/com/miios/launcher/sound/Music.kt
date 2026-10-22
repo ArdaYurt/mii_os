@@ -10,7 +10,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.miios.launcher.R
-import java.io.File
 
 /**
  * Home-screen music, like the Wii Menu's: a calm loop while Mii_OS is on screen, fading out when
@@ -19,7 +18,6 @@ import java.io.File
  */
 object Music {
 
-    private val extensions = listOf("ogg", "mp3", "m4a", "wav", "flac")
     private var player: MediaPlayer? = null
     private var source: String? = null
     private val handler = Handler(Looper.getMainLooper())
@@ -56,7 +54,7 @@ object Music {
     /** Starts (or resumes) the loop and fades it in. */
     fun play(context: Context) {
         if (!enabled) return
-        val custom = extensions.map { File(Sounds.folder(context), "music.$it") }.firstOrNull { it.isFile }
+        val custom = Sounds.custom(context, "music")
         val wanted = custom?.let { "${it.path}@${it.lastModified()}" } ?: "built-in"
         if (player == null || wanted != source) {
             release()

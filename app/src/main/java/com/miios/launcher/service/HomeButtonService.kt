@@ -1,11 +1,15 @@
 package com.miios.launcher.service
 
 import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.AccessibilityService.ScreenshotResult
+import android.accessibilityservice.AccessibilityService.TakeScreenshotCallback
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.provider.Settings
+import android.graphics.Bitmap
+import android.view.Display
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 import androidx.compose.runtime.getValue
@@ -53,10 +57,39 @@ class HomeButtonService : AccessibilityService() {
                 openMiiOs()
             } else {
                 Sounds.play(Sfx.Home)
+                com.miios.launcher.ui.MiiFont.refresh(this)
+                captureBackdrop()
                 menu.show()
             }
         }
         return true
+    }
+
+    /**
+     * Takes a picture of the app on screen and hands the menu a small blurred copy for its
+     * background. Protected video comes back black or not at all; the menu then just dims it.
+     */
+    private fun captureBackdrop() {
+        try {
+            takeScreenshot(
+                Display.DEFAULT_DISPLAY,
+                mainExecutor,
+                object : TakeScreenshotCallback {
+                    override fun onSuccess(result: ScreenshotResult) {
+                        val buffer = result.hardwareBuffer
+                        val picture = runCatching {
+                            Bitmap.wrapHardwareBuffer(buffer, result.colorSpace)?.let { softBlur(it) }
+                        }.getOrNull()
+                        buffer.close()
+                        if (picture != null) menu?.setBackdrop(picture)
+                    }
+
+                    override fun onFailure(errorCode: Int) = Unit
+                },
+            )
+        } catch (e: Exception) {
+            // older service settings without the screenshot permission: dim only
+        }
     }
 
     private fun move(dx: Int) {
@@ -124,6 +157,43 @@ class HomeButtonService : AccessibilityService() {
             ) ?: return false
             val self = ComponentName(context, HomeButtonService::class.java).flattenToString()
             return enabled.split(':').any { it.equals(self, ignoreCase = true) }
+        }
+    }
+}
+
+/**
+ * A soft blur, cheap enough to run on every HOME press: shrink the picture to a tiny size, box-blur
+ * it there, and let the image view scale it back up smoothly.
+ */
+private fun softBlur(source: Bitmap): Bitmap {
+    val full = source.copy(Bitmap.Config.ARGB_8888, false)
+    val w = 160
+    val h = (160f * full.height / full.width).toInt().coerceAtLeast(1)
+    val small = Bitmap.createScaledBitmap(full, w, h, true)
+    full.recycle()
+    val px = IntArray(w * h)
+    small.getPixels(px, 0, w, 0, 0, w, h)
+    val tmp = IntArray(w * h)
+    repeat(3) {
+        boxPass(px, tmp, w, h, 3, horizontal = true)
+        boxPass(tmp, px, w, h, 3, horizontal = false)
+    }
+    return Bitmap.createBitmap(px, w, h, Bitmap.Config.ARGB_8888)
+}
+
+private fun boxPass(src: IntArray, dst: IntArray, w: Int, h: Int, r: Int, horizontal: Boolean) {
+    val lines = if (horizontal) h else w
+    val len = if (horizontal) w else h
+    for (line in 0 until lines) {
+        for (i in 0 until len) {
+            var a = 0; var rr = 0; var g = 0; var b = 0; var n = 0
+            for (k in -r..r) {
+                val j = (i + k).coerceIn(0, len - 1)
+                val c = if (horizontal) src[line * w + j] else src[j * w + line]
+                a += c ushr 24; rr += (c shr 16) and 0xFF; g += (c shr 8) and 0xFF; b += c and 0xFF; n++
+            }
+            val out = ((a / n) shl 24) or ((rr / n) shl 16) or ((g / n) shl 8) or (b / n)
+            if (horizontal) dst[line * w + i] = out else dst[i * w + line] = out
         }
     }
 }

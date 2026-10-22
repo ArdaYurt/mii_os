@@ -24,6 +24,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -105,20 +106,54 @@ fun HandPointer(target: PointerTarget, show: Boolean) {
 
     if (pos == Offset.Unspecified) return
     val w = unit * 4.2f
+    val own = HandImage.bitmap
+    // the fingertip: on the drawn hand it's known; on your own image it's near the top, left of centre
+    val tipX = if (own != null) HandImage.TIP_X else 0.36f
+    val tipY = if (own != null) HandImage.TIP_Y else 0.03f
     Canvas(
         Modifier
-            .size(w, w * 1.3f)
+            .size(w, if (own != null) w * own.height / own.width else w * 1.3f)
             .graphicsLayer {
                 this.alpha = alpha
                 // the fingertip sits on the target point
-                translationX = pos.x - size.width * 0.36f
-                translationY = pos.y - size.height * 0.03f
-                rotationZ = -14f + tip * 10f
+                translationX = pos.x - size.width * tipX
+                translationY = pos.y - size.height * tipY
+                rotationZ = (if (own != null) 0f else -14f) + tip * 10f
                 scaleX = press.value
                 scaleY = press.value
-                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.36f, 0.03f)
+                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(tipX, tipY)
             },
-    ) { drawHand() }
+    ) {
+        if (own != null) {
+            drawImage(
+                own,
+                dstSize = androidx.compose.ui.unit.IntSize(size.width.toInt(), size.height.toInt()),
+                filterQuality = androidx.compose.ui.graphics.FilterQuality.High,
+            )
+        } else {
+            drawHand()
+        }
+    }
+}
+
+/**
+ * Your own pointer, from the cursor pack: /sdcard/Mii_OS/cursor/hand.png (a PNG with a transparent
+ * background, pointing up, its fingertip touching the top edge a little left of centre).
+ */
+object HandImage {
+    const val TIP_X = 0.4f
+    const val TIP_Y = 0.03f
+    var bitmap: androidx.compose.ui.graphics.ImageBitmap? by mutableStateOf(null)
+        private set
+    private var stamp = 0L
+
+    fun refresh(context: android.content.Context) {
+        val file = com.miios.launcher.storage.PackFolders.find(context, "cursor", "hand", listOf("png", "webp"))
+        val next = file?.let { it.lastModified() + it.length() } ?: 0L
+        if (next == stamp) return
+        stamp = next
+        bitmap = file?.let { runCatching { android.graphics.BitmapFactory.decodeFile(it.path)?.asImageBitmap() }.getOrNull() }
+    }
 }
 
 /** An original pointing glove: white, outlined in soft blue, with a cuff and a drop shadow. */

@@ -24,7 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 /** Where an update stands, as the home screen shows it. */
 sealed interface UpdateState {
     data object None : UpdateState
-    data class Available(val version: Int) : UpdateState
+    /** [version] is the build number; [name] and [notes] are what the prompt shows. */
+    data class Available(val version: Int, val name: String = "", val notes: List<String> = emptyList()) : UpdateState
     /** Downloading; [progress] is 0→1, or negative when the size isn't known. */
     data class Downloading(val progress: Float) : UpdateState
 }
@@ -49,7 +50,7 @@ fun UpdatePrompt(state: UpdateState, focused: UpdateButton, progress: () -> Floa
         GlassSurface(
             RoundedCornerShape(unit * 2.4f),
             Modifier
-                .size(unit * 52f, unit * 24f)
+                .size(unit * 52f, if (state is UpdateState.Available && state.notes.isNotEmpty()) unit * 31f else unit * 24f)
                 .graphicsLayer {
                     val p = progress().coerceIn(0f, 1f)
                     val s = 0.92f + 0.08f * p
@@ -64,7 +65,8 @@ fun UpdatePrompt(state: UpdateState, focused: UpdateButton, progress: () -> Floa
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(unit * 1f)) {
                     Canvas(Modifier.size(unit * 2.6f)) { drawMiiIcon(MiiIcon.Download, colors.focus, weight = 2.4f) }
-                    Label("Mii_OS update", unit * 2.4f, colors.ink, FontWeight.ExtraBold)
+                    val title = (state as? UpdateState.Available)?.name?.takeIf { it.isNotEmpty() }
+                    Label(if (title != null) "Mii_OS $title" else "Mii_OS update", unit * 2.4f, colors.ink, FontWeight.ExtraBold)
                 }
                 when (state) {
                     is UpdateState.Downloading -> {
@@ -78,6 +80,13 @@ fun UpdatePrompt(state: UpdateState, focused: UpdateButton, progress: () -> Floa
                     }
                     else -> {
                         Label("A new version of Mii_OS is ready. Install it now?", unit * 1.5f, colors.inkSoft, FontWeight.Medium)
+                        // the release's top highlights, from CHANGELOG.md
+                        val notes = (state as? UpdateState.Available)?.notes.orEmpty().take(4)
+                        if (notes.isNotEmpty()) {
+                            Column(verticalArrangement = Arrangement.spacedBy(unit * 0.4f)) {
+                                for (note in notes) Label("•  $note", unit * 1.2f, colors.ink, FontWeight.Medium)
+                            }
+                        }
                         Row(horizontalArrangement = Arrangement.spacedBy(unit * 3f)) {
                             PillButton("Later", MiiIcon.Back, focused == UpdateButton.Later)
                             PillButton("Update", MiiIcon.Download, focused == UpdateButton.Update)

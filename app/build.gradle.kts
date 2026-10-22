@@ -17,7 +17,8 @@ android {
         // CI numbers every build, so the in-app updater can tell which one is newer.
         val build = System.getenv("MII_VERSION_CODE")?.toIntOrNull() ?: 1
         versionCode = build
-        versionName = "0.2.$build"
+        // The release number people see, from VERSION at the repo root (raised per notable change)
+        versionName = rootProject.file("VERSION").readText().trim()
     }
 
     signingConfigs {

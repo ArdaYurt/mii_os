@@ -126,7 +126,7 @@ fun RenameDialog(initial: String, onDone: (String) -> Unit) {
                     value = value,
                     onValueChange = { value = it.copy(text = it.text.take(24)) },
                     singleLine = true,
-                    textStyle = TextStyle(color = colors.ink, fontSize = fontSize, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center),
+                    textStyle = TextStyle(color = colors.ink, fontSize = fontSize, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, fontFamily = MiiFont.family),
                     cursorBrush = SolidColor(colors.focus),
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = { onDone(value.text) }),

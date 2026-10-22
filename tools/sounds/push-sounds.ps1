@@ -15,7 +15,9 @@
 $ErrorActionPreference = "Stop"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $pack = Join-Path $here "my-sounds"
-$target = "/sdcard/Android/data/com.miios.launcher/files/sounds/"
+# A shared folder: some boxes refuse adb writes into Mii_OS's own Android/data folder.
+$target = "/sdcard/Mii_OS/sounds/"
+$oldTarget = "/sdcard/Android/data/com.miios.launcher/files/sounds/"
 
 $adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
 if (-not (Test-Path $adb)) {
@@ -36,15 +38,19 @@ $names = "move", "select", "back", "launch", "page", "home", "notice", "music"
 $files = Get-ChildItem $pack -File | Where-Object { $names -contains $_.BaseName.ToLower() -and $_.Extension -match '^\.(mp3|ogg|wav|m4a|flac)$' }
 if (-not $files -and -not $reset) { throw "No sound files with the right names in $pack." }
 
-$ip = Read-Host "Your TV box's IP address (Settings > Network on the box)"
+# The box's IP can be given as an argument (push-sounds.ps1 192.168.x.x); otherwise it asks.
+$ip = $args | Where-Object { $_ -notlike "-*" } | Select-Object -First 1
+if (-not $ip) { $ip = Read-Host "Your TV box's IP address (Settings > Network on the box)" }
 if ($args -contains "-reset") {
     & $adb connect "${ip}:5555" | Out-Host
-    & $adb -s "${ip}:5555" shell "rm -f ${target}*" | Out-Null
+    & $adb -s "${ip}:5555" shell "rm -f ${target}* ${oldTarget}*" 2>$null | Out-Null
     Write-Host "Removed your sound pack. Mii_OS plays its own sounds again." -ForegroundColor Green
     exit 0
 }
 & $adb connect "${ip}:5555" | Out-Host
 & $adb -s "${ip}:5555" shell mkdir -p $target | Out-Null
+# Lets Mii_OS read the shared folder (asked once; harmless to repeat).
+& $adb -s "${ip}:5555" shell pm grant com.miios.launcher android.permission.READ_EXTERNAL_STORAGE | Out-Null
 # Remove old versions with other extensions, so the new file is the one Mii_OS picks.
 foreach ($f in $files) {
     $base = $f.BaseName.ToLower()

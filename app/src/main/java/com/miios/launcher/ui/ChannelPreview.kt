@@ -137,6 +137,7 @@ fun ChannelPreview(
                         fontSize = with(LocalDensity.current) { (unit * 1.35f).toSp() },
                         fontWeight = FontWeight.Medium,
                         textAlign = TextAlign.Center,
+                        fontFamily = MiiFont.family,
                     ),
                 )
             }
