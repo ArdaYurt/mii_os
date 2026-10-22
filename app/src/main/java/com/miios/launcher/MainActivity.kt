@@ -76,7 +76,7 @@ class MainActivity : ComponentActivity() {
                 SettingsItem.Apps -> Settings.ACTION_APPLICATION_SETTINGS
                 SettingsItem.DateTime -> Settings.ACTION_DATE_SETTINGS
                 SettingsItem.System -> Settings.ACTION_SETTINGS
-                SettingsItem.Updates, SettingsItem.Sounds, SettingsItem.HomeMenu -> return
+                SettingsItem.Updates, SettingsItem.Sounds, SettingsItem.HomeMenu, SettingsItem.Remote -> return
             }
             // Google TV doesn't have every settings page; fall back to the main one.
             val intent = Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -228,6 +228,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         HomeButtonService.refresh(this)
+        com.miios.launcher.service.RemoteButtons.load(this)
         askForPackAccess()
         com.miios.launcher.ui.MiiFont.refresh(this)
         com.miios.launcher.ui.HandImage.refresh(this)

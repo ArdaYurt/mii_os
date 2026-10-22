@@ -132,6 +132,16 @@ visible behind it, softly blurred and dimmed. It needs the
 it takes you to the box's Accessibility settings, where you choose *Mii_OS Home button* and switch
 it on (Android only lets the box's owner do that). The speed-up script can also turn it on.
 
+### Remote buttons
+
+**Settings › Remote buttons** gives the remote's **TV+** and **Assistant** buttons a new job: ← → on
+a row picks what the button opens (the TV channel, Plex, any installed channel, or *Its own job* to
+leave it alone). TV+ opens the TV channel by default; the Assistant button keeps Google Assistant
+until you choose something else. Mii_OS has to learn TV+ once: press OK on its row, then TV+. The
+same works for the Assistant button if it doesn't react. This uses the same accessibility service
+as the HOME Menu, so switch that on first. Gemini can't be put on the Assistant button: Google only
+offers Gemini for TV on Google TV devices with Android 14 or newer, and the Mi Box S runs Android 11.
+
 ### Sounds and your own sound pack
 
 Mii_OS has its own soft clicks and chimes, made for it. To use your own sounds instead, put audio

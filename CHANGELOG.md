@@ -6,6 +6,12 @@ here, at the top, in the same pull request: the first bullets are what the pop-u
 biggest change first. Pull requests that don't change `VERSION` still reach the box as builds of the
 current version.
 
+## 0.6.0
+
+- Remote buttons: the remote's TV+ button can open the TV channel, Plex or any channel you like. Set it in Settings › Remote buttons
+- The Assistant button can open a channel too, or keep Google Assistant (the default)
+- If a button isn't recognised, press OK on its row and then the button: Mii_OS learns it
+
 ## 0.5.2
 
 - A download bar for installs and Mii_OS updates: how far the download is, then installing, then done, or why it didn't work
