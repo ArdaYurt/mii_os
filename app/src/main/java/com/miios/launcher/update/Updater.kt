@@ -42,10 +42,15 @@ object Updater {
 
     /**
      * Android only installs apps from sources the owner has allowed. Mii_OS asks once; this opens
-     * the screen where that's switched on, and returns false while it's off.
+     * the screen where that's switched on, and returns false that one time. After that it goes
+     * ahead: some TV boxes report the switch as off even when it's on, and Android's installer
+     * asks again itself if it really is off.
      */
     fun canInstall(context: Context): Boolean {
         if (context.packageManager.canRequestPackageInstalls()) return true
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        if (prefs.getBoolean("askedForSources", false)) return true
+        prefs.edit().putBoolean("askedForSources", true).apply()
         val settings = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${context.packageName}"))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         try {
