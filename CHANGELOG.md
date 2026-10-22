@@ -10,6 +10,11 @@ current version.
 
 - Going home from the HOME Menu: the home screen comes out of a soft white glow and settles into place for exactly as long as the home-exit sound, so the two end together
 
+## 0.5.0
+
+- Screen Share now uses an open-source AirPlay receiver from GitHub: no ads, no Play Store. Open Screen Share and press Install
+- Screen Share keeps its place and folder on the home screen; you can uninstall AirScreen
+
 ## 0.4.3
 
 - The home screen looks more like the Wii Menu: plain white, empty places in soft grey with fine lines and a faint "Mii", a grey bottom bar edged in blue, and a segmented clock

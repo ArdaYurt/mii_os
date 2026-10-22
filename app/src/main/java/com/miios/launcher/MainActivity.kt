@@ -31,6 +31,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/** The AirPlay receiver's newest release on GitHub (jqssun/android-airplay-server, GPL-3.0). */
+private const val SCREEN_SHARE_APK =
+    "https://github.com/jqssun/android-airplay-server/releases/latest/download/app-release.apk"
+
 class MainActivity : ComponentActivity() {
 
     private val apps = mutableStateOf<List<InstalledApp>>(emptyList())
@@ -45,13 +49,13 @@ class MainActivity : ComponentActivity() {
     private val actions = object : LauncherActions {
         override fun launch(app: InstalledApp) {
             val intent = app.launchIntent
-            if (intent != null) start(intent) else openStore(app.packageName)
+            if (intent != null) start(intent) else install(app.packageName)
         }
 
         override fun openAppInfo(app: InstalledApp) {
             // The TV channel's Menu opens its own setup, where the playlist is changed.
             if (app.packageName == TvActivity.CHANNEL_ID) return start(TvActivity.intent(this@MainActivity, setup = true))
-            if (!app.installed) return openStore(app.packageName)
+            if (!app.installed) return install(app.packageName)
             start(
                 Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${app.packageName}"))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
@@ -125,9 +129,39 @@ class MainActivity : ComponentActivity() {
         }
 
         override fun openScreenShare() {
-            val app = apps.value.firstOrNull { it.packageName == ChannelStyles.AIRSCREEN }
+            val app = apps.value.firstOrNull { it.packageName == ChannelStyles.SCREEN_SHARE }
             val intent = app?.launchIntent
-            if (intent != null) start(intent) else openStore(ChannelStyles.AIRSCREEN)
+            if (intent != null) start(intent) else install(ChannelStyles.SCREEN_SHARE)
+        }
+    }
+
+    /** Installs a favourite channel: Screen Share straight from GitHub, the rest from the Play Store. */
+    private fun install(pkg: String) {
+        if (pkg == ChannelStyles.SCREEN_SHARE) installScreenShare() else openStore(pkg)
+    }
+
+    private var screenShareDownloading = false
+
+    /**
+     * Downloads the open-source AirPlay receiver from its developer's GitHub releases and installs it;
+     * Android's installer asks first. No Play Store, no account.
+     */
+    private fun installScreenShare() {
+        if (screenShareDownloading) return
+        if (!Updater.canInstall(this, retry = "choose Install again")) return
+        screenShareDownloading = true
+        Toast.makeText(this, "Downloading the AirPlay receiver from GitHub…", Toast.LENGTH_LONG).show()
+        lifecycleScope.launch {
+            try {
+                Updater.installFrom(this@MainActivity, java.net.URL(SCREEN_SHARE_APK), ChannelStyles.SCREEN_SHARE) {}
+            } catch (e: Exception) {
+                Toast.makeText(
+                    this@MainActivity,
+                    "Couldn't download the AirPlay receiver. Check the internet connection and try again.",
+                    Toast.LENGTH_LONG,
+                ).show()
+            }
+            screenShareDownloading = false
         }
     }
 

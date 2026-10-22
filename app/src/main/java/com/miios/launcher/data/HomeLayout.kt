@@ -1,6 +1,7 @@
 package com.miios.launcher.data
 
 import android.content.Context
+import com.miios.launcher.art.ChannelStyles
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -41,7 +42,11 @@ class HomeLayout(context: Context) {
 
     private data class FolderData(val name: String, val apps: List<String>)
 
-    private fun order(): List<String> = prefs.getString("order", null)?.split('\n')?.filter { it.isNotEmpty() } ?: emptyList()
+    private fun order(): List<String> =
+        prefs.getString("order", null)?.split('\n')?.filter { it.isNotEmpty() }?.map(::renamed) ?: emptyList()
+
+    /** Screen Share moved from AirScreen to the open-source receiver; it keeps its place and folder. */
+    private fun renamed(key: String) = if (key == ChannelStyles.AIRSCREEN) ChannelStyles.SCREEN_SHARE else key
 
     private fun folders(): LinkedHashMap<String, FolderData> {
         val out = LinkedHashMap<String, FolderData>()
@@ -51,7 +56,7 @@ class HomeLayout(context: Context) {
             for (id in obj.keys()) {
                 val f = obj.getJSONObject(id)
                 val apps = f.getJSONArray("apps")
-                out[id] = FolderData(f.getString("name"), List(apps.length()) { apps.getString(it) })
+                out[id] = FolderData(f.getString("name"), List(apps.length()) { renamed(apps.getString(it)) })
             }
         }
         return out

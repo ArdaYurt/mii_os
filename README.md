@@ -62,14 +62,23 @@ uninstall Mii_OS and install it one last time with step 3.
 
 ### Favourite channels
 
-Apple TV, YouTube, Plex, Prime Video, Stremio and Screen Share (AirScreen) always have the first channels,
+Apple TV, YouTube, Plex, Prime Video, Stremio and Screen Share always have the first channels,
 with Mii_OS's own art. If one isn't installed yet its channel is greyed out with an **Install** tag;
-open it and press **Install** to go to its Play Store page.
+open it and press **Install** to go to its Play Store page (Screen Share installs from GitHub instead).
 
 ### iPhone and iPad screen sharing
 
-The box can't receive AirPlay on its own. Install **AirScreen** from the Screen Share channel. Open it,
-then on your iPhone or iPad use *Screen Mirroring* in Control Center and pick the TV.
+The box can't receive AirPlay on its own, so Screen Share uses
+[AirPlay Receiver](https://github.com/jqssun/android-airplay-server) by jqssun: open source (GPL-3.0,
+built on [UxPlay](https://github.com/FDH2/UxPlay)), no ads, no account. Open the Screen Share channel
+and press **Install**: Mii_OS downloads the newest release straight from that GitHub page and Android
+asks you to confirm. Then press **Start**, and on your iPhone or iPad use *Screen Mirroring* in
+Control Center and pick the TV. Mirroring, photos, videos and music work; DRM-protected video (the
+Apple TV app, Netflix) won't mirror, which is Apple's rule, not the receiver's. If you had AirScreen
+before, you can uninstall it.
+
+The receiver is a separate app, not part of Mii_OS: it has its own licence and updates, and Mii_OS
+never bundles its code.
 
 ### TV channel (live IPTV)
 
@@ -108,7 +117,7 @@ alone. Steps are in [`tools/speedup/README.md`](tools/speedup/README.md).
 | Remote | What it does |
 |---|---|
 | ← ↑ → ↓ | Move between channels; the hand follows. Going past the right or left edge turns the page; the arrows at the screen's edges show when there's another page. |
-| Down from the bottom row | Reach the dock: **Settings** opens the Mii_OS Settings screen, **Share** opens the Screen Share channel (AirScreen, for iPhone/iPad screen sharing). |
+| Down from the bottom row | Reach the dock: **Settings** opens the Mii_OS Settings screen, **Share** opens the Screen Share channel (AirPlay, for iPhone/iPad screen sharing). |
 | OK | The channel grows into its channel screen (known channels open on their own colours, their name drifting behind the logo). **Start** launches the app, **Options** moves it, puts it in a folder or shows its app info. |
 | Hold OK (or the menu button) | Options for that channel: **Move** it (the arrows carry it to any place, empty ones too, trading places with whatever is there; OK puts it down), make a **New folder**, or **Add to** an existing folder. On a folder: move, rename or remove it. Inside a folder: move a channel back out. |
 | Back | Close the channel screen, folder or menu. |
