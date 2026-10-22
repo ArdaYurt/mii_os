@@ -67,7 +67,7 @@ object AppRepository {
 
     /**
      * Favourite channels: always shown first, in this order, with Mii_OS art.
-     * Plezy is an open-source Plex client. Screen Share is an open-source AirPlay receiver, for
+     * Plezy is an open-source Plex client and Nuvio an open-source Stremio alternative. Screen Share is an open-source AirPlay receiver, for
      * iPhone and iPad screen sharing.
      * TV is Mii_OS's own live IPTV channel.
      */
@@ -78,6 +78,7 @@ object AppRepository {
         ChannelStyles.PLEZY,
         ChannelStyles.PRIME_VIDEO,
         ChannelStyles.STREMIO,
+        ChannelStyles.NUVIO,
         ChannelStyles.SCREEN_SHARE,
         ChannelStyles.TV,
     )

@@ -62,7 +62,7 @@ uninstall Mii_OS and install it one last time with step 3.
 
 ### Favourite channels
 
-Apple TV, YouTube, Plex, Plezy, Prime Video, Stremio and Screen Share always have the first channels,
+Apple TV, YouTube, Plex, Plezy, Prime Video, Stremio, Nuvio and Screen Share always have the first channels,
 with Mii_OS's own art. If one isn't installed yet its channel is greyed out with an **Install** tag;
 open it and press **Install** to go to its Play Store page (Plezy and Screen Share install from GitHub
 instead).
@@ -75,6 +75,16 @@ Open the Plezy channel and press **Install**: Mii_OS downloads the newest releas
 processor from that GitHub page, unpacks it and Android asks you to confirm. Sign in with your Plex
 account. It's a separate app with its own licence and updates; Mii_OS never bundles its code. The
 official Plex channel stays, so you can keep whichever you like.
+
+### Nuvio (open-source Stremio alternative)
+
+[Nuvio TV](https://github.com/NuvioMedia/NuvioTV) is an open-source app (GPL-3.0) that plays the
+same add-ons as Stremio, built natively for Android TV in Kotlin, without Stremio's built-in
+streaming server, so it's lighter on a 2 GB box. Open the Nuvio channel and press **Install** to go
+to its Play Store page. Mii_OS uses the Play Store build on purpose: the GitHub build also turns on
+Nuvio's scraper plugins, which Mii_OS doesn't point people to. Nuvio has no Stremio sign-in; add
+each add-on by pasting its install link in Nuvio's Settings › Addons. Stremio's channel stays, so
+you can keep whichever you like.
 
 ### iPhone and iPad screen sharing
 
@@ -185,7 +195,7 @@ Mii_OS also plays its own calm menu music on the home screen, fading out when an
 
 To replace a channel's art with your own image, make it 16:9 (3840×2160 is ideal; 1920×1080 also
 looks sharp) as PNG, WebP or JPG, and name it after the channel: `apple-tv`, `youtube`, `plex`,
-`prime-video`, `stremio`, `screen-share`, `tv`, `disney-plus`, `mubi`, `hbo-max`, `spotify`, `kick`,
+`prime-video`, `stremio`, `nuvio`, `screen-share`, `tv`, `disney-plus`, `mubi`, `hbo-max`, `spotify`, `kick`,
 or any app's name in lowercase with dashes (`Pluto TV` → `pluto-tv.png`). Put the images in
 `tools/logos/my-logos` and double-click [`tools/logos/push-logos.bat`](tools/logos/push-logos.bat).
 It copies them to `/sdcard/Mii_OS/logos` on the box and lets Mii_OS read that folder. They go to
