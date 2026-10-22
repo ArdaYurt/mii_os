@@ -43,8 +43,8 @@ object AppRepository {
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
                 byPackage[pkg] = InstalledApp(
                     packageName = pkg,
-                    // AirScreen is the box's Screen Share channel, so it goes by that name
-                    label = if (pkg == ChannelStyles.AIRSCREEN) "Screen Share" else info.loadLabel(pm).toString(),
+                    // the AirPlay receiver is the box's Screen Share channel, so it goes by that name
+                    label = if (pkg == ChannelStyles.SCREEN_SHARE) "Screen Share" else info.loadLabel(pm).toString(),
                     launchIntent = launch,
                     banner = sharp(pm, activity.applicationInfo, if (activity.banner != 0) activity.banner else activity.applicationInfo.banner)
                         ?: activity.loadBanner(pm) ?: activity.applicationInfo.loadBanner(pm),
@@ -67,7 +67,7 @@ object AppRepository {
 
     /**
      * Favourite channels: always shown first, in this order, with Mii_OS art.
-     * AirScreen gives iPhone and iPad screen sharing, since the box has no AirPlay of its own.
+     * Screen Share is an open-source AirPlay receiver, for iPhone and iPad screen sharing.
      * TV is Mii_OS's own live IPTV channel.
      */
     val pinned = listOf(
@@ -76,7 +76,7 @@ object AppRepository {
         ChannelStyles.PLEX,
         ChannelStyles.PRIME_VIDEO,
         ChannelStyles.STREMIO,
-        ChannelStyles.AIRSCREEN,
+        ChannelStyles.SCREEN_SHARE,
         ChannelStyles.TV,
     )
 

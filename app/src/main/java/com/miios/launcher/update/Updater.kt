@@ -61,7 +61,7 @@ object Updater {
      * ahead: some TV boxes report the switch as off even when it's on, and Android's installer
      * asks again itself if it really is off.
      */
-    fun canInstall(context: Context): Boolean {
+    fun canInstall(context: Context, retry: String = "choose Update again"): Boolean {
         if (context.packageManager.canRequestPackageInstalls()) return true
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         if (prefs.getBoolean("askedForSources", false)) return true
@@ -73,15 +73,22 @@ object Updater {
         } catch (e: Exception) {
             context.startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }
-        Toast.makeText(context, "Turn on Mii_OS, then press Back and choose Update again", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, "Turn on Mii_OS, then press Back and $retry", Toast.LENGTH_LONG).show()
         return false
     }
 
     /** Downloads the latest APK and hands it to Android's installer, which asks the owner to confirm. */
-    suspend fun install(context: Context, onProgress: (Float) -> Unit) {
-        val apk = File(context.cacheDir, "mii-os-update.apk")
+    suspend fun install(context: Context, onProgress: (Float) -> Unit) =
+        installFrom(context, URL(BASE + "mii-os.apk"), context.packageName, onProgress)
+
+    /**
+     * Downloads the APK at [url] and hands it to Android's installer, which asks the owner to confirm.
+     * The file must really be [pkg]: anything else is deleted, never installed.
+     */
+    suspend fun installFrom(context: Context, url: URL, pkg: String, onProgress: (Float) -> Unit) {
+        val apk = File(context.cacheDir, "$pkg.apk")
         withContext(Dispatchers.IO) {
-            val connection = open(URL(BASE + "mii-os.apk"))
+            val connection = open(url)
             val total = connection.contentLengthLong.takeIf { it > 0 } ?: -1L
             connection.inputStream.use { input ->
                 apk.outputStream().use { output ->
@@ -97,12 +104,18 @@ object Updater {
                 }
             }
 
+            val found = context.packageManager.getPackageArchiveInfo(apk.path, 0)?.packageName
+            if (found != pkg) {
+                apk.delete()
+                throw java.io.IOException("Downloaded file is ${found ?: "not an app"}, expected $pkg")
+            }
+
             val installer = context.packageManager.packageInstaller
             val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
-            params.setAppPackageName(context.packageName)
+            params.setAppPackageName(pkg)
             val id = installer.createSession(params)
             installer.openSession(id).use { session ->
-                session.openWrite("mii-os.apk", 0, apk.length()).use { out ->
+                session.openWrite("$pkg.apk", 0, apk.length()).use { out ->
                     apk.inputStream().use { it.copyTo(out) }
                     session.fsync(out)
                 }
@@ -157,6 +170,11 @@ class InstallResultReceiver : BroadcastReceiver() {
             PackageInstaller.STATUS_SUCCESS -> Unit
             else -> {
                 val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE).orEmpty()
+                val pkg = intent.getStringExtra(PackageInstaller.EXTRA_PACKAGE_NAME)
+                if (pkg != null && pkg != context.packageName) {
+                    Toast.makeText(context, "Didn't install. $message", Toast.LENGTH_LONG).show()
+                    return
+                }
                 // A different signing key is the usual cause: the old build has to be uninstalled once.
                 val hint = if ("signature" in message.lowercase() || "conflict" in message.lowercase()) {
                     " This build was signed differently: uninstall Mii_OS once and install it again."
