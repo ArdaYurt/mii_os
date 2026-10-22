@@ -139,6 +139,7 @@ the moment they play, then double-click [`tools/sounds/push-sounds.bat`](tools/s
 | `home` | the HOME Menu opens |
 | `home-exit` | leaving an app for Mii_OS from the HOME Menu |
 | `notice` | a message such as "update available" |
+| `volume` | the remote's volume buttons; pressed again and again, it slides up or down in pitch and gets softer, so 0 to 100 sounds like one smooth sweep (*Settings › Sounds › Volume button sound* turns it off) |
 | `music` | the home-screen music (it loops) |
 
 Any of `.mp3`, `.ogg`, `.wav`, `.m4a` or `.flac` works, and you can replace just some of them. The

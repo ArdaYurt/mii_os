@@ -11,6 +11,7 @@ current version.
 - Branded channel screens: Spotify opens on green, YouTube on red, with the channel's name drifting behind and its logo floating in front
 - A new pointing hand, closer to the Wii's
 - New Settings and Share buttons in the dock, glossy Wii blue
+- A sound for the remote's volume buttons that slides smoothly when you hold or repeat them (volume in your sound pack; switch it off in Settings › Sounds)
 
 ## 0.4.2
 

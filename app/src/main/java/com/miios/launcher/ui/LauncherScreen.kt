@@ -370,6 +370,7 @@ fun LauncherScreen(
                 if (dx != 0) when (soundRow) {
                     SoundRow.Effects -> Sounds.switchTo(dx > 0)
                     SoundRow.EffectsVolume -> Sounds.changeVolume(Sounds.effectsVolume + dx * 0.1f)
+                    SoundRow.VolumeKeys -> Sounds.switchVolumeKeys(dx > 0)
                     SoundRow.Music -> Music.switchTo(context, dx > 0)
                     SoundRow.MusicVolume -> Music.changeVolume(context, Music.volume + dx * 0.1f)
                 }
@@ -473,6 +474,7 @@ fun LauncherScreen(
             }
             Zone.Sound -> when (soundRow) {
                 SoundRow.Effects -> Sounds.switchTo(!Sounds.enabled)
+                SoundRow.VolumeKeys -> Sounds.switchVolumeKeys(!Sounds.volumeKeys)
                 SoundRow.Music -> Music.switchTo(context, !Music.enabled)
                 else -> Unit
             }
