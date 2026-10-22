@@ -10,6 +10,12 @@ current version.
 
 - Plezy, a faster open-source Plex app, has its own channel: open it and press Install. It comes from its developer's GitHub, with no ads, and plays your films in 4K, HDR and Dolby Vision
 
+## 0.6.0
+
+- Remote buttons: the remote's TV+ button can open the TV channel, Plex or any channel you like. Set it in Settings › Remote buttons
+- If a button isn't recognised, press OK on its row and then the button: Mii_OS learns it
+- The Assistant button can be set too, on remotes that send it as a button (the Mi Box S remote doesn't, so it stays Google Assistant)
+
 ## 0.5.2
 
 - A download bar for installs and Mii_OS updates: how far the download is, then installing, then done, or why it didn't work

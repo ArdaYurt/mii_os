@@ -73,11 +73,11 @@ fun SoundPanel(focused: SoundRow, progress: () -> Float) {
 }
 
 @Composable
-private fun RowFrame(focused: Boolean, content: @Composable () -> Unit) {
+internal fun RowFrame(focused: Boolean, height: Float = 5f, content: @Composable () -> Unit) {
     val unit = LocalUnit.current
     val colors = LocalMiiColors.current
     val ring by animateFloatAsState(if (focused) 1f else 0f, Motion.glow, label = "soundRing")
-    Box(Modifier.fillMaxWidth().height(unit * 5f).background(colors.tileFrame, RoundedCornerShape(unit * 1.4f))) {
+    Box(Modifier.fillMaxWidth().height(unit * height).background(colors.tileFrame, RoundedCornerShape(unit * 1.4f))) {
         Box(Modifier.fillMaxSize().padding(horizontal = unit * 1.6f), contentAlignment = Alignment.CenterStart) { content() }
         Canvas(Modifier.fillMaxSize()) {
             drawRoundRect(

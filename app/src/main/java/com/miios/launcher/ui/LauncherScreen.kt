@@ -49,6 +49,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import com.miios.launcher.data.InstalledApp
 import com.miios.launcher.data.Slot
+import com.miios.launcher.service.RemoteButtons
+import com.miios.launcher.service.RemoteKey
 import com.miios.launcher.sound.Sfx
 import com.miios.launcher.update.Downloads
 import com.miios.launcher.sound.Music
@@ -82,7 +84,7 @@ private const val COLS = 4
 private const val ROWS = 3
 private const val PER_PAGE = COLS * ROWS
 
-private enum class Zone { Grid, Dock, Preview, Settings, Update, Folder, Options, Rename, Sound }
+private enum class Zone { Grid, Dock, Preview, Settings, Update, Folder, Options, Rename, Sound, Remote }
 
 /**
  * The home screen. Focus is driven by one key handler rather than Compose's focus search,
@@ -122,6 +124,9 @@ fun LauncherScreen(
     var soundRow by remember { mutableStateOf(SoundRow.Effects) }
     val soundAnim = remember { Animatable(0f) }
     val soundVisible by remember { derivedStateOf { soundAnim.value > 0f } }
+    var remoteRow by remember { mutableStateOf(RemoteKey.TvPlus) }
+    val remoteAnim = remember { Animatable(0f) }
+    val remoteVisible by remember { derivedStateOf { remoteAnim.value > 0f } }
     // Move mode: a working copy of the home screen while a channel is carried around.
     var moving by remember { mutableStateOf<List<Slot>?>(null) }
     // The home screen as it was when the move started, and where the carried channel came from.
@@ -130,6 +135,9 @@ fun LauncherScreen(
     var moveBase by remember { mutableStateOf<List<Slot>>(emptyList()) }
     var moveFrom by remember { mutableIntStateOf(-1) }
     val shown = moving ?: slots
+    val buttonTargets = remember(slots) {
+        buttonTargets(slots.flatMap { (it as? Slot.Folder)?.apps ?: listOfNotNull((it as? Slot.App)?.app) })
+    }
     // The open folder, by key, and the focused channel inside it.
     var folderKey by remember { mutableStateOf<String?>(null) }
     var folderIndex by remember { mutableIntStateOf(0) }
@@ -324,6 +332,8 @@ fun LauncherScreen(
             if (zone == Zone.Update) actions.dismissUpdate()
             updateAnim.snapTo(0f)
             soundAnim.snapTo(0f)
+            remoteAnim.snapTo(0f)
+            RemoteButtons.teaching = null
             moving?.let { actions.saveOrder(it) }
             moving = null
             folderAnim.snapTo(0f)
@@ -350,6 +360,16 @@ fun LauncherScreen(
                 zone = Zone.Settings
                 Sounds.play(Sfx.Back)
                 scope.launch { soundAnim.animateTo(0f, Motion.preview) }
+            }
+            Zone.Remote -> {
+                Sounds.play(Sfx.Back)
+                // Back first stops waiting for a button, then closes
+                if (RemoteButtons.teaching != null) {
+                    RemoteButtons.teaching = null
+                } else {
+                    zone = Zone.Settings
+                    scope.launch { remoteAnim.animateTo(0f, Motion.preview) }
+                }
             }
             Zone.Grid -> if (moving != null) dropMoving()
             else -> zone = Zone.Grid
@@ -396,6 +416,15 @@ fun LauncherScreen(
                     SoundRow.VolumeKeys -> Sounds.switchVolumeKeys(dx > 0)
                     SoundRow.Music -> Music.switchTo(context, dx > 0)
                     SoundRow.MusicVolume -> Music.changeVolume(context, Music.volume + dx * 0.1f)
+                }
+            }
+            Zone.Remote -> {
+                if (dy != 0) remoteRow = RemoteKey.entries[(remoteRow.ordinal + dy).coerceIn(0, RemoteKey.entries.size - 1)]
+                if (dx != 0 && buttonTargets.isNotEmpty()) {
+                    RemoteButtons.teaching = null
+                    val now = buttonTargets.indexOfFirst { it.id == RemoteButtons.targets[remoteRow] }.coerceAtLeast(0)
+                    val next = (now + dx).mod(buttonTargets.size)
+                    RemoteButtons.setTarget(remoteRow, buttonTargets[next].id)
                 }
             }
             Zone.Folder -> {
@@ -452,10 +481,10 @@ fun LauncherScreen(
     }
 
     fun move(dx: Int, dy: Int) {
-        val before = listOf(zone, index, dock, previewButton, settingsIndex, updateButton, soundRow, Sounds.effectsVolume, Sounds.enabled)
+        val before = listOf(zone, index, dock, previewButton, settingsIndex, updateButton, soundRow, Sounds.effectsVolume, Sounds.enabled, remoteRow, RemoteButtons.targets)
         val pageBefore = page
         step(dx, dy)
-        val after = listOf(zone, index, dock, previewButton, settingsIndex, updateButton, soundRow, Sounds.effectsVolume, Sounds.enabled)
+        val after = listOf(zone, index, dock, previewButton, settingsIndex, updateButton, soundRow, Sounds.effectsVolume, Sounds.enabled, remoteRow, RemoteButtons.targets)
         when {
             zone == Zone.Grid && index / PER_PAGE != pageBefore -> Sounds.play(Sfx.Page)
             before != after -> Sounds.play(Sfx.Move)
@@ -491,6 +520,10 @@ fun LauncherScreen(
                     zone = Zone.Sound
                     soundRow = SoundRow.Effects
                     scope.launch { soundAnim.animateTo(1f, Motion.preview) }
+                } else if (item == SettingsItem.Remote) {
+                    zone = Zone.Remote
+                    remoteRow = RemoteKey.TvPlus
+                    scope.launch { remoteAnim.animateTo(1f, Motion.preview) }
                 } else {
                     actions.openSystemSetting(item)
                 }
@@ -501,6 +534,8 @@ fun LauncherScreen(
                 SoundRow.Music -> Music.switchTo(context, !Music.enabled)
                 else -> Unit
             }
+            // OK, then the button itself: Mii_OS learns which code it sends
+            Zone.Remote -> RemoteButtons.teaching = if (RemoteButtons.teaching == remoteRow) null else remoteRow
             Zone.Update -> when {
                 update !is UpdateState.Available -> Unit
                 updateButton == UpdateButton.Update -> { Sounds.play(Sfx.Select); actions.installUpdate() }
@@ -554,6 +589,11 @@ fun LauncherScreen(
             .onPreviewKeyEvent { event ->
                 // the folder name field takes the keys while it's open
                 if (zone == Zone.Rename) return@onPreviewKeyEvent false
+                // Without the HOME Menu service, Mii_OS still learns a button pressed on its own screen.
+                if (zone == Zone.Remote && RemoteButtons.learn(event.nativeKeyEvent)) {
+                    if (event.type == KeyEventType.KeyUp) Sounds.play(Sfx.Select)
+                    return@onPreviewKeyEvent true
+                }
                 val handled = when (event.key) {
                     Key.DirectionLeft, Key.DirectionRight, Key.DirectionUp, Key.DirectionDown,
                     Key.DirectionCenter, Key.Enter, Key.NumPadEnter, Key.Menu -> true
@@ -700,6 +740,10 @@ fun LauncherScreen(
 
             if (zone == Zone.Sound || soundVisible) {
                 SoundPanel(soundRow) { soundAnim.value }
+            }
+
+            if (zone == Zone.Remote || remoteVisible) {
+                RemotePanel(remoteRow, buttonTargets) { remoteAnim.value }
             }
 
             // the download manager: what's downloading or installing, over the tips line above the dock
