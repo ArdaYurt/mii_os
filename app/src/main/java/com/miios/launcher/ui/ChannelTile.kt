@@ -202,16 +202,32 @@ private fun LoadedArt(app: InstalledApp, modifier: Modifier) {
     ChannelArtView(art, app.label, modifier.onSizeChanged { size = it })
 }
 
+/**
+ * An empty place, as on the Wii Menu: a soft grey tile with fine horizontal lines and the
+ * name pressed faintly into it.
+ */
 @Composable
 private fun EmptySlot(modifier: Modifier) {
     val unit = LocalUnit.current
-    Canvas(modifier.padding(unit * 2.2f)) {
-        val step = unit.toPx() * 1.2f
-        val stripe = Color.White.copy(alpha = 0.25f)
-        var x = -size.height
-        while (x < size.width) {
-            drawLine(stripe, Offset(x, size.height), Offset(x + size.height, 0f), strokeWidth = step / 2f)
-            x += step
+    val textSize = with(LocalDensity.current) { (unit * 3.4f).toSp() }
+    Box(modifier, contentAlignment = Alignment.Center) {
+        Canvas(Modifier.fillMaxSize()) {
+            // a little light at the top, like a moulded plastic slot
+            drawRect(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.55f), Color.Transparent), 0f, size.height * 0.5f))
+            val step = unit.toPx() * 0.42f
+            var y = step
+            while (y < size.height) {
+                drawLine(Color.White.copy(alpha = 0.5f), Offset(0f, y), Offset(size.width, y), strokeWidth = step * 0.4f)
+                y += step
+            }
         }
+        // embossed: a white highlight just below, the grey letters on top
+        val style = androidx.compose.ui.text.TextStyle(fontSize = textSize, fontWeight = FontWeight.Bold, fontFamily = MiiFont.family)
+        androidx.compose.foundation.text.BasicText(
+            "Mii",
+            Modifier.graphicsLayer { translationY = unit.toPx() * 0.12f },
+            style = style.copy(color = Color.White.copy(alpha = 0.9f)),
+        )
+        androidx.compose.foundation.text.BasicText("Mii", style = style.copy(color = Color(0xFFC9CDD1)))
     }
 }

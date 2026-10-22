@@ -6,6 +6,14 @@ here, at the top, in the same pull request: the first bullets are what the pop-u
 biggest change first. Pull requests that don't change `VERSION` still reach the box as builds of the
 current version.
 
+## 0.4.3
+
+- The home screen looks more like the Wii Menu: plain white, empty places in soft grey with fine lines and a faint "Mii", a grey bottom bar edged in blue, and a segmented clock
+- Branded channel screens: Spotify opens on green, YouTube on red, with the channel's name drifting behind and its logo floating in front
+- A new pointing hand, closer to the Wii's
+- New Settings and Share buttons in the dock, glossy Wii blue
+- A sound for the remote's volume buttons that slides smoothly when you hold or repeat them (volume in your sound pack; switch it off in Settings › Sounds)
+
 ## 0.4.2
 
 - Channels fill their tiles edge to edge: no grey frame, and the blue focus ring sits right on the logo

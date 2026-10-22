@@ -29,7 +29,7 @@ import com.miios.launcher.sound.Music
 import com.miios.launcher.sound.Sounds
 
 /** Rows of the Sounds panel, in order. */
-enum class SoundRow { Effects, EffectsVolume, Music, MusicVolume }
+enum class SoundRow { Effects, EffectsVolume, VolumeKeys, Music, MusicVolume }
 
 /**
  * Sounds, opened from Mii_OS Settings: effects and music each get an on/off switch and a volume
@@ -63,6 +63,7 @@ fun SoundPanel(focused: SoundRow, progress: () -> Float) {
                 }
                 ToggleRow("Clicks and chimes", Sounds.enabled, focused == SoundRow.Effects)
                 SliderRow("Clicks volume", Sounds.effectsVolume, focused == SoundRow.EffectsVolume, Sounds.enabled)
+                ToggleRow("Volume button sound", Sounds.volumeKeys && Sounds.enabled, focused == SoundRow.VolumeKeys)
                 ToggleRow("Menu music", Music.enabled, focused == SoundRow.Music)
                 SliderRow("Music volume", Music.volume, focused == SoundRow.MusicVolume, Music.enabled)
                 Label("← → to change, OK to switch on or off, Back to close", unit * 1.1f, colors.inkSoft, FontWeight.Medium, Modifier.fillMaxWidth())

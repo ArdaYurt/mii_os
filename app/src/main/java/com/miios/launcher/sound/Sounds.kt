@@ -23,6 +23,8 @@ enum class Sfx(val file: String, val builtIn: Int) {
     /** Leaving an app for Mii_OS from the HOME Menu; the built-in one is the select sound. */
     HomeExit("home-exit", R.raw.mii_select),
     Notice("notice", R.raw.mii_notice),
+    /** The remote's volume keys (the TV's own volume, which shows nothing on screen). */
+    Volume("volume", R.raw.mii_volume),
 }
 
 /**
@@ -54,6 +56,15 @@ object Sounds {
         prefs?.edit()?.putFloat("effectsVolume", effectsVolume)?.apply()
     }
 
+    /** The volume-keys sound switch in Settings › Sounds. */
+    var volumeKeys by mutableStateOf(true)
+        private set
+
+    fun switchVolumeKeys(on: Boolean) {
+        volumeKeys = on
+        prefs?.edit()?.putBoolean("volumeKeys", on)?.apply()
+    }
+
     fun switchTo(on: Boolean) {
         enabled = on
         prefs?.edit()?.putBoolean("enabled", on)?.apply()
@@ -70,6 +81,7 @@ object Sounds {
             prefs = app.getSharedPreferences("sounds", Context.MODE_PRIVATE).also {
                 enabled = it.getBoolean("enabled", true)
                 effectsVolume = it.getFloat("effectsVolume", 0.8f)
+                volumeKeys = it.getBoolean("volumeKeys", true)
             }
             Music.restore(app)
         }
@@ -96,6 +108,28 @@ object Sounds {
         pool = next
         // make sure the folder exists, so it's easy to find when copying a pack over
         PackFolders.own(app, "sounds").mkdirs()
+    }
+
+    private var lastVolume = 0L
+    private var volumeRun = 0
+
+    /**
+     * A press of the remote's volume key. The first press of a run plays the volume sound in full;
+     * held or repeated presses play it at most every 110 ms, softer each time and sliding up in
+     * pitch for louder (down for quieter), so going from 0 to 100 sounds like one smooth sweep.
+     */
+    fun volumeKey(up: Boolean) {
+        if (!enabled || !volumeKeys) return
+        val pool = pool ?: return
+        val now = SystemClock.uptimeMillis()
+        if (now - lastVolume > 450) volumeRun = 0
+        if (volumeRun > 0 && now - lastVolume < 110) return
+        lastVolume = now
+        val step = volumeRun.coerceAtMost(15)
+        val rate = if (up) 1f + step * 0.035f else 1f - step * 0.025f
+        val gain = (if (volumeRun == 0) 1f else (0.7f - step * 0.025f).coerceAtLeast(0.35f)) * effectsVolume
+        volumeRun++
+        pool.play(ids[Sfx.Volume.ordinal], gain, gain, 1, 0, rate)
     }
 
     fun play(sfx: Sfx) {

@@ -63,8 +63,14 @@ fun ChannelPreview(
     // Full-resolution art is only ever decoded here, for the one channel being previewed.
     LaunchedEffect(app.packageName, ChannelArtLoader.version) { art = ChannelArtLoader.load(context, app, screen.width, screen.height) }
 
+    // known channels get their own branded screen; others show their art full screen
+    val style = remember(app.packageName) { ChannelStyles.forApp(app.packageName, app.label) }
     val hero: @Composable () -> Unit = {
-        ChannelArtView(art, app.label, Modifier.fillMaxSize().notInstalled(!app.installed))
+        if (style != null) {
+            ChannelStage(style, art, app.label, Modifier.fillMaxSize().notInstalled(!app.installed))
+        } else {
+            ChannelArtView(art, app.label, Modifier.fillMaxSize().notInstalled(!app.installed))
+        }
     }
 
     Box(
@@ -119,7 +125,7 @@ fun ChannelPreview(
             }
         }
         // a line of help for channels that need it, e.g. Screen Share explaining AirPlay
-        val blurb = remember(app.packageName) { ChannelStyles.forApp(app.packageName, app.label)?.blurb }
+        val blurb = style?.blurb
         if (blurb != null) {
             GlassSurface(
                 RoundedCornerShape(unit * 1.6f),

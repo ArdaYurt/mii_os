@@ -69,5 +69,9 @@ save('mii_page', sw, 0.55)
 # home: the HOME Menu opening, a gentle two-tone "bwoop" with a bell on top
 save('mii_home', mix((0, glide(440, 660, 0.14, 0.07)), (ms(120), glide(660, 990, 0.16, 0.09)), (ms(130), 0.4 * bell(1980, 0.5, 0.15))), 0.7)
 
+# volume: a tiny glassy blip for the remote's volume keys; Mii_OS raises or lowers its pitch as
+# you keep pressing, so a run of presses sounds like one smooth slide instead of the same click
+save('mii_volume', mix((0, bell(1568.0, 0.12, 0.035)), (0, 0.5 * glide(780, 820, 0.06, 0.02))), 0.55)
+
 # update / notice: two soft bells, like a message arriving
 save('mii_notice', mix((0, bell(1318.5, 0.6, 0.2)), (ms(140), bell(1760, 0.8, 0.25))), 0.7)

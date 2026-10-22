@@ -86,17 +86,10 @@ fun GlassSurface(
     }
 }
 
-/** The Wii Menu's backdrop: white fading to soft grey, with its faint horizontal lines. */
+/** The Wii Menu's backdrop: plain white. */
 @Composable
 fun Scenery(colors: MiiColors, modifier: Modifier = Modifier) {
     Canvas(modifier.fillMaxSize()) {
-        drawRect(Brush.verticalGradient(listOf(colors.bg1, colors.bg2)))
-        val w = size.width
-        val step = w * 0.0062f
-        var y = step
-        while (y < size.height) {
-            drawLine(colors.lines, Offset(0f, y), Offset(w, y), strokeWidth = w * 0.0009f)
-            y += step
-        }
+        drawRect(colors.bg1)
     }
 }

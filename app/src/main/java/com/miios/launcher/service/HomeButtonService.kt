@@ -37,6 +37,12 @@ class HomeButtonService : AccessibilityService() {
     }
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
+        // The volume keys change the TV's volume over HDMI, which shows nothing on screen, so
+        // Mii_OS plays a sound for them. They always pass on untouched, even over the menu.
+        if (event.keyCode == KeyEvent.KEYCODE_VOLUME_UP || event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            if (event.action == KeyEvent.ACTION_DOWN) Sounds.volumeKey(event.keyCode == KeyEvent.KEYCODE_VOLUME_UP)
+            return false
+        }
         val menu = menu ?: return false
         val up = event.action == KeyEvent.ACTION_UP
         if (menu.showing) {
