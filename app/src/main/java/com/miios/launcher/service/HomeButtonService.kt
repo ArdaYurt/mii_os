@@ -104,7 +104,7 @@ class HomeButtonService : AccessibilityService() {
     }
 
     private fun goHome() {
-        Sounds.play(Sfx.Select)
+        Sounds.play(Sfx.HomeExit)
         openMiiOs()
         menu?.hide()
     }

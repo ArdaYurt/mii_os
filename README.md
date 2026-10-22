@@ -137,6 +137,7 @@ the moment they play, then double-click [`tools/sounds/push-sounds.bat`](tools/s
 | `launch` | pressing Start |
 | `page` | turning the page of channels |
 | `home` | the HOME Menu opens |
+| `home-exit` | leaving an app for Mii_OS from the HOME Menu |
 | `notice` | a message such as "update available" |
 | `music` | the home-screen music (it loops) |
 

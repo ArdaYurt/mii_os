@@ -20,6 +20,8 @@ enum class Sfx(val file: String, val builtIn: Int) {
     Launch("launch", R.raw.mii_launch),
     Page("page", R.raw.mii_page),
     Home("home", R.raw.mii_home),
+    /** Leaving an app for Mii_OS from the HOME Menu; the built-in one is the select sound. */
+    HomeExit("home-exit", R.raw.mii_select),
     Notice("notice", R.raw.mii_notice),
 }
 

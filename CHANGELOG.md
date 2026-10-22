@@ -6,6 +6,10 @@ here, at the top, in the same pull request: the first bullets are what the pop-u
 biggest change first. Pull requests that don't change `VERSION` still reach the box as builds of the
 current version.
 
+## 0.4.1
+
+- HOME Menu: its own sound for going home from an app (home-exit in your sound pack)
+
 ## 0.4.0
 
 - Menu music, with music and effects volume in Settings › Sounds
