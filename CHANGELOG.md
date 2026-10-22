@@ -6,6 +6,10 @@ here, at the top, in the same pull request: the first bullets are what the pop-u
 biggest change first. Pull requests that don't change `VERSION` still reach the box as builds of the
 current version.
 
+## 0.6.1
+
+- Plezy, a faster open-source Plex app, has its own channel: open it and press Install. It comes from its developer's GitHub, with no ads, and plays your films in 4K, HDR and Dolby Vision
+
 ## 0.6.0
 
 - Remote buttons: the remote's TV+ button can open the TV channel, Plex or any channel you like. Set it in Settings › Remote buttons
