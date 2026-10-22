@@ -78,8 +78,28 @@ object ChannelArtLoader {
         BitmapFactory.decodeFile(file.path, bounds)
         var sample = 1
         while (bounds.outWidth / (sample * 2) >= width && bounds.outHeight / (sample * 2) >= height) sample *= 2
-        val bitmap = BitmapFactory.decodeFile(file.path, BitmapFactory.Options().apply { inSampleSize = sample }) ?: return null
-        return ChannelArt.FullBleed(bitmap.asImageBitmap())
+        val decoded = BitmapFactory.decodeFile(file.path, BitmapFactory.Options().apply { inSampleSize = sample }) ?: return null
+        return ChannelArt.FullBleed(cropTo(decoded, width, height).asImageBitmap())
+    }
+
+    /**
+     * Scales and centre-crops to exactly [width] × [height] pixels with filtering, once, so the
+     * tile draws the image 1:1 instead of resampling a power-of-two decode on every frame.
+     */
+    private fun cropTo(source: Bitmap, width: Int, height: Int): Bitmap {
+        if (width <= 0 || height <= 0 || (source.width == width && source.height == height)) return source
+        val scale = maxOf(width.toFloat() / source.width, height.toFloat() / source.height)
+        val out = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(out)
+        val dx = (width - source.width * scale) / 2f
+        val dy = (height - source.height * scale) / 2f
+        canvas.drawBitmap(
+            source,
+            android.graphics.Matrix().apply { setScale(scale, scale); postTranslate(dx, dy) },
+            android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG or android.graphics.Paint.ANTI_ALIAS_FLAG),
+        )
+        source.recycle()
+        return out
     }
 
     /** "Prime Video" -> "prime-video", "Disney+" -> "disney" */

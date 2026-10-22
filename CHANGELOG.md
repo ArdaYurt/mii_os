@@ -6,6 +6,12 @@ here, at the top, in the same pull request: the first bullets are what the pop-u
 biggest change first. Pull requests that don't change `VERSION` still reach the box as builds of the
 current version.
 
+## 0.4.2
+
+- Channels fill their tiles edge to edge: no grey frame, and the blue focus ring sits right on the logo
+- Put channels in any place, empty places included, like an Android home screen
+- Sharper logos: your images are scaled once to the tile's exact size
+
 ## 0.4.1
 
 - HOME Menu: its own sound for going home from an app (home-exit in your sound pack)
