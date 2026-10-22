@@ -29,6 +29,7 @@ enum class SettingsItem(val title: String, val detail: String, val icon: MiiIcon
     Display("Display & Sound", "Resolution, HDR, audio output", MiiIcon.Display),
     Apps("Apps", "Storage, updates, uninstall", MiiIcon.Apps),
     DateTime("Date & Time", "Clock and time zone", MiiIcon.Clock),
+    Updates("Mii_OS Update", "Check for a new version", MiiIcon.Download),
     System("All Settings", "Everything else on the box", MiiIcon.Sliders),
 }
 
