@@ -64,8 +64,8 @@ uninstall Mii_OS and install it one last time with step 3.
 
 Apple TV, YouTube, Plex, Plezy, Prime Video, Stremio, Nuvio and Screen Share always have the first channels,
 with Mii_OS's own art. If one isn't installed yet its channel is greyed out with an **Install** tag;
-open it and press **Install** to go to its Play Store page (Plezy and Screen Share install from GitHub
-instead).
+open it and press **Install** to go to its Play Store page (Plezy, Nuvio and Screen Share install from
+GitHub instead).
 
 ### Plezy (open-source Plex)
 
@@ -80,11 +80,12 @@ official Plex channel stays, so you can keep whichever you like.
 
 [Nuvio TV](https://github.com/NuvioMedia/NuvioTV) is an open-source app (GPL-3.0) that plays the
 same add-ons as Stremio, built natively for Android TV in Kotlin, without Stremio's built-in
-streaming server, so it's lighter on a 2 GB box. Open the Nuvio channel and press **Install** to go
-to its Play Store page. Mii_OS uses the Play Store build on purpose: the GitHub build also turns on
-Nuvio's scraper plugins, which Mii_OS doesn't point people to. Nuvio has no Stremio sign-in; add
-each add-on by pasting its install link in Nuvio's Settings › Addons. Stremio's channel stays, so
-you can keep whichever you like.
+streaming server, so it's lighter on a 2 GB box. Open the Nuvio channel and press **Install**:
+Mii_OS downloads the newest release for the box's processor from that GitHub page and Android asks
+you to confirm. (Its Play Store version isn't offered for the Mi Box S.) Like Stremio, it starts
+with no sources: add each add-on by pasting its install link in Nuvio's Settings › Addons. The
+GitHub build can also take third-party "plugins"; it ships none and Mii_OS doesn't point to any.
+Stremio's channel stays, so you can keep whichever you like.
 
 ### iPhone and iPad screen sharing
 

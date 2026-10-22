@@ -23,13 +23,19 @@ object GitHubApps {
         // edde746/plezy, GPL-3.0: a Plex client for TV with direct play, HDR and Dolby Vision.
         // Its Android builds come one per processor type, each as plezy.apk in a .tar.gz.
         ChannelStyles.PLEZY -> Source(
-            URL("https://github.com/edde746/plezy/releases/latest/download/plezy-android-${plezyAbi()}.tar.gz"),
+            URL("https://github.com/edde746/plezy/releases/latest/download/plezy-android-${abi()}.tar.gz"),
             "Plezy",
+        )
+        // NuvioMedia/NuvioTV, GPL-3.0: plays Stremio add-ons. One .apk per processor type. This
+        // build can also take scraper plugins; it ships none, and Mii_OS never points to any.
+        ChannelStyles.NUVIO -> Source(
+            URL("https://github.com/NuvioMedia/NuvioTV/releases/latest/download/app-full-${abi()}-release.apk"),
+            "Nuvio",
         )
         else -> null
     }
 
     /** The build that runs best here: 64-bit when the box's Android is, otherwise 32-bit. */
-    private fun plezyAbi(): String =
+    private fun abi(): String =
         Build.SUPPORTED_ABIS.firstOrNull { it in listOf("arm64-v8a", "armeabi-v7a", "x86_64") } ?: "armeabi-v7a"
 }

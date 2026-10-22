@@ -129,7 +129,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** Installs a favourite channel: open-source ones (Screen Share, Plezy) straight from GitHub, the rest from the Play Store. */
+    /** Installs a favourite channel: open-source ones (Screen Share, Plezy, Nuvio) straight from GitHub, the rest from the Play Store. */
     private fun install(pkg: String) {
         if (GitHubApps.sourceFor(pkg) != null) installFromGitHub(pkg) else openStore(pkg)
     }
