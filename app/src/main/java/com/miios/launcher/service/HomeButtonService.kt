@@ -8,6 +8,9 @@ import android.content.pm.PackageManager
 import android.provider.Settings
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.miios.launcher.MainActivity
 import com.miios.launcher.sound.Sfx
 import com.miios.launcher.sound.Sounds
@@ -106,6 +109,14 @@ class HomeButtonService : AccessibilityService() {
     }
 
     companion object {
+        /** Whether the HOME Menu is on, as of the last [refresh]. */
+        var on by mutableStateOf(false)
+            private set
+
+        fun refresh(context: Context) {
+            on = isEnabled(context)
+        }
+
         fun isEnabled(context: Context): Boolean {
             val enabled = Settings.Secure.getString(
                 context.contentResolver,

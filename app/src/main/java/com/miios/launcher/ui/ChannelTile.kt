@@ -99,6 +99,7 @@ fun ChannelTile(
     Box(
         modifier
             .onGloballyPositioned { if (focused) onFocusedBounds(Rect(it.positionInRoot(), it.size.toSize())) }
+            .pointerTarget(focused)
             .zIndex(if (focused) 1f else 0f)
             .graphicsLayer {
                 scaleX = scale.value
