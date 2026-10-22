@@ -9,8 +9,8 @@ current version.
 ## 0.6.0
 
 - Remote buttons: the remote's TV+ button can open the TV channel, Plex or any channel you like. Set it in Settings › Remote buttons
-- The Assistant button can open a channel too, or keep Google Assistant (the default)
 - If a button isn't recognised, press OK on its row and then the button: Mii_OS learns it
+- The Assistant button can be set too, on remotes that send it as a button (the Mi Box S remote doesn't, so it stays Google Assistant)
 
 ## 0.5.2
 

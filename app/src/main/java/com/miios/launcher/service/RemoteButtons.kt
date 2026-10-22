@@ -13,7 +13,10 @@ import com.miios.launcher.tv.TvActivity
  * whose remote sends something else learns it in Settings › Remote buttons.
  */
 enum class RemoteKey(val title: String, val defaultCodes: Set<Int>, val defaultTarget: String?) {
-    TvPlus("TV+ button", emptySet(), TvActivity.CHANNEL_ID),
+    // The Mi Box S remote's key layout (Vendor_2717_Product_32b9.kl) sends TV+ as BUTTON_5.
+    TvPlus("TV+ button", setOf(KeyEvent.KEYCODE_BUTTON_5), TvActivity.CHANNEL_ID),
+    // On the Mi Box S the Assistant button goes over the remote's voice link, not as a key, so
+    // these only help on remotes that do send it as a key.
     Assistant(
         "Assistant button",
         setOf(KeyEvent.KEYCODE_ASSIST, KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_SEARCH),
