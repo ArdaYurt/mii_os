@@ -106,6 +106,8 @@ object Sounds {
             ids[sfx.ordinal] = if (file != null) next.load(file.path, 1) else next.load(app, sfx.builtIn, 1)
         }
         pool = next
+        // only the home-exit sound's length is needed: the home screen's return lasts as long as it
+        lengths[Sfx.HomeExit.ordinal] = measure(app, Sfx.HomeExit, custom[Sfx.HomeExit])
         // make sure the folder exists, so it's easy to find when copying a pack over
         PackFolders.own(app, "sounds").mkdirs()
     }
@@ -131,6 +133,23 @@ object Sounds {
         volumeRun++
         pool.play(ids[Sfx.Volume.ordinal], gain, gain, 1, 0, rate)
     }
+
+    private val lengths = LongArray(Sfx.entries.size)
+
+    /** How long [sfx] plays, in milliseconds (your own file's length, or the built-in one's); 0 if unknown. */
+    fun lengthOf(sfx: Sfx): Long = lengths[sfx.ordinal]
+
+    private fun measure(context: Context, sfx: Sfx, file: File?): Long = runCatching {
+        android.media.MediaMetadataRetriever().run {
+            try {
+                if (file != null) setDataSource(file.path)
+                else setDataSource(context, android.net.Uri.parse("android.resource://${context.packageName}/${sfx.builtIn}"))
+                extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+            } finally {
+                release()
+            }
+        }
+    }.getOrDefault(0L)
 
     fun play(sfx: Sfx) {
         if (!enabled) return

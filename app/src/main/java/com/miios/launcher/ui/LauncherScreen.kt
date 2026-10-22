@@ -35,6 +35,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -91,6 +92,8 @@ private enum class Zone { Grid, Dock, Preview, Settings, Update, Folder, Options
 fun LauncherScreen(
     slots: List<Slot>,
     homePresses: Int,
+    /** A return from the HOME Menu (its count, and its length in ms, matching the home-exit sound). */
+    homeReturn: Pair<Int, Long> = 0 to 0L,
     update: UpdateState,
     actions: LauncherActions,
 ) {
@@ -291,6 +294,17 @@ fun LauncherScreen(
         moving = null
         Sounds.play(Sfx.Select)
         actions.saveOrder(list)
+    }
+
+    // Coming back from the HOME Menu, as on the Wii: the home screen comes out of a white glow
+    // and settles from slightly zoomed in, taking as long as the home-exit sound, so they end
+    // together. The remote works throughout.
+    val arrive = remember { Animatable(1f) }
+    LaunchedEffect(homeReturn.first) {
+        if (homeReturn.first > 0) {
+            arrive.snapTo(0f)
+            arrive.animateTo(1f, androidx.compose.animation.core.tween(homeReturn.second.toInt(), easing = androidx.compose.animation.core.FastOutSlowInEasing))
+        }
     }
 
     LaunchedEffect(homePresses) {
@@ -515,6 +529,17 @@ fun LauncherScreen(
     BoxWithConstraints(
         Modifier
             .fillMaxSize()
+            .graphicsLayer {
+                val s = 1f + 0.08f * (1f - arrive.value)
+                scaleX = s
+                scaleY = s
+            }
+            .drawWithContent {
+                drawContent()
+                // the glow clears in the first half, the zoom carries on to the end
+                val glow = (1f - arrive.value * 2f).coerceIn(0f, 1f)
+                if (glow > 0f) drawRect(androidx.compose.ui.graphics.Color.White, alpha = glow)
+            }
             .focusRequester(focusRequester)
             .focusable()
             .onPreviewKeyEvent { event ->

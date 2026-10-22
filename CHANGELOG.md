@@ -6,6 +6,10 @@ here, at the top, in the same pull request: the first bullets are what the pop-u
 biggest change first. Pull requests that don't change `VERSION` still reach the box as builds of the
 current version.
 
+## 0.5.1
+
+- Going home from the HOME Menu: the home screen comes out of a soft white glow and settles into place for exactly as long as the home-exit sound, so the two end together
+
 ## 0.5.0
 
 - Screen Share now uses an open-source AirPlay receiver from GitHub: no ads, no Play Store. Open Screen Share and press Install
