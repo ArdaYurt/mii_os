@@ -54,13 +54,19 @@ class MainActivity : ComponentActivity() {
 
         override fun openSystemSetting(item: SettingsItem) {
             if (item == SettingsItem.Updates) return checkForUpdate(force = true)
+            if (item == SettingsItem.Sounds) {
+                Sounds.setEnabled(!Sounds.enabled)
+                // a chime when turning on, so it's clear right away whether sound comes through
+                Sounds.play(com.miios.launcher.sound.Sfx.Launch)
+                return
+            }
             val action = when (item) {
                 SettingsItem.Network -> Settings.ACTION_WIFI_SETTINGS
                 SettingsItem.Display -> Settings.ACTION_DISPLAY_SETTINGS
                 SettingsItem.Apps -> Settings.ACTION_APPLICATION_SETTINGS
                 SettingsItem.DateTime -> Settings.ACTION_DATE_SETTINGS
                 SettingsItem.System -> Settings.ACTION_SETTINGS
-                SettingsItem.Updates -> return
+                SettingsItem.Updates, SettingsItem.Sounds -> return
             }
             // Google TV doesn't have every settings page; fall back to the main one.
             val intent = Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

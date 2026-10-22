@@ -4,6 +4,9 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.SoundPool
 import android.os.SystemClock
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.miios.launcher.R
 import java.io.File
 
@@ -32,6 +35,16 @@ object Sounds {
     private val ids = IntArray(Sfx.entries.size)
     private var packStamp = -1L
     private var lastMove = 0L
+    private var prefs: android.content.SharedPreferences? = null
+
+    /** The Sounds switch in Mii_OS Settings. State, so the Settings screen shows it live. */
+    var enabled by mutableStateOf(true)
+        private set
+
+    fun setEnabled(on: Boolean) {
+        enabled = on
+        prefs?.edit()?.putBoolean("enabled", on)?.apply()
+    }
 
     fun folder(context: Context): File = File(context.getExternalFilesDir(null), "sounds")
 
@@ -39,6 +52,9 @@ object Sounds {
     @Synchronized
     fun load(context: Context) {
         val app = context.applicationContext
+        if (prefs == null) {
+            prefs = app.getSharedPreferences("sounds", Context.MODE_PRIVATE).also { enabled = it.getBoolean("enabled", true) }
+        }
         val dir = folder(app)
         val custom = Sfx.entries.associateWith { sfx -> extensions.map { File(dir, "${sfx.file}.$it") }.firstOrNull { it.isFile } }
         val stamp = custom.values.sumOf { it?.lastModified()?.plus(it.length()) ?: 0L }
@@ -48,8 +64,10 @@ object Sounds {
         val next = SoundPool.Builder()
             .setMaxStreams(4)
             .setAudioAttributes(
+                // Media usage, so the sounds follow the TV's main volume. Android TV boxes often
+                // keep the separate system-sounds volume very low or muted.
                 AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                    .setUsage(AudioAttributes.USAGE_GAME)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                     .build(),
             )
@@ -64,6 +82,7 @@ object Sounds {
     }
 
     fun play(sfx: Sfx) {
+        if (!enabled) return
         val pool = pool ?: return
         if (sfx == Sfx.Move) {
             // holding a direction repeats fast; keep the ticks from smearing into a buzz
@@ -71,7 +90,7 @@ object Sounds {
             if (now - lastMove < 45) return
             lastMove = now
         }
-        val volume = if (sfx == Sfx.Move) 0.6f else 0.9f
+        val volume = if (sfx == Sfx.Move) 0.8f else 1f
         pool.play(ids[sfx.ordinal], volume, volume, 1, 0, 1f)
     }
 }
