@@ -49,12 +49,14 @@ class MainActivity : ComponentActivity() {
         }
 
         override fun openSystemSetting(item: SettingsItem) {
+            if (item == SettingsItem.Updates) return checkForUpdate(force = true)
             val action = when (item) {
                 SettingsItem.Network -> Settings.ACTION_WIFI_SETTINGS
                 SettingsItem.Display -> Settings.ACTION_DISPLAY_SETTINGS
                 SettingsItem.Apps -> Settings.ACTION_APPLICATION_SETTINGS
                 SettingsItem.DateTime -> Settings.ACTION_DATE_SETTINGS
                 SettingsItem.System -> Settings.ACTION_SETTINGS
+                SettingsItem.Updates -> return
             }
             // Google TV doesn't have every settings page; fall back to the main one.
             val intent = Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -122,10 +124,18 @@ class MainActivity : ComponentActivity() {
             val loaded = withContext(Dispatchers.IO) { AppRepository.load(this@MainActivity) }
             if (loaded.map { it.packageName } != apps.value.map { it.packageName }) apps.value = loaded
         }
+        checkForUpdate(force = false)
+    }
+
+    private fun checkForUpdate(force: Boolean) {
         lifecycleScope.launch {
-            val newer = Updater.check(this@MainActivity) ?: return@launch
-            // "Later" holds that version back until the app restarts; a newer one asks again.
-            if (newer != dismissedUpdate && update.value is UpdateState.None) update.value = UpdateState.Available(newer)
+            val newer = Updater.check(this@MainActivity, force)
+            if (newer == null) {
+                if (force) Toast.makeText(this@MainActivity, "Mii_OS is up to date", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            // "Later" holds that version back until the app restarts, unless asked from Settings.
+            if ((force || newer != dismissedUpdate) && update.value is UpdateState.None) update.value = UpdateState.Available(newer)
         }
     }
 

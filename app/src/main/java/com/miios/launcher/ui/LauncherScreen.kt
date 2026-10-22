@@ -194,7 +194,7 @@ fun LauncherScreen(
                 zone = zoneBeforeUpdate
                 updateAnim.animateTo(0f, Motion.preview)
             }
-            update is UpdateState.Available && zone != Zone.Update && (zone == Zone.Grid || zone == Zone.Dock) -> {
+            update is UpdateState.Available && (zone == Zone.Grid || zone == Zone.Dock || zone == Zone.Settings) -> {
                 zoneBeforeUpdate = zone
                 zone = Zone.Update
                 updateButton = UpdateButton.Update

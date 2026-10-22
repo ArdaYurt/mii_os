@@ -24,7 +24,7 @@ object Updater {
 
     private const val BASE = "https://github.com/ArdaYurt/mii_os/releases/latest/download/"
     private const val PREFS = "updater"
-    private const val CHECK_EVERY_MS = 6 * 60 * 60 * 1000L
+    private const val CHECK_EVERY_MS = 30 * 60 * 1000L
 
     /** A newer build than the one running, or null. Checks at most every few hours. */
     suspend fun check(context: Context, force: Boolean = false): Int? = withContext(Dispatchers.IO) {
