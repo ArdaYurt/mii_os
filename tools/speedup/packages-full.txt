@@ -1,0 +1,9 @@
+# Step 2: full speed-up. Only use this once Mii_OS works well as your home screen.
+# These run in the background all the time for the stock Google TV home.
+# Turning them off frees the most memory, and Mii_OS becomes the only home screen.
+# mii-restore.bat turns all of them back on.
+
+com.google.android.apps.tv.launcherx        # Stock Google TV home screen
+com.google.android.videos                   # Google TV films and shows (feeds the stock home)
+com.google.android.youtube.tvmusic          # YouTube Music
+com.google.android.tungsten.setupwraith     # Setup wizard (can take the home screen back after a restart)

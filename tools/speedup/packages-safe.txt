@@ -1,0 +1,16 @@
+# Step 1: safe cleanup. Apps nobody misses on a TV box.
+# One package per line; the text after # is the name the script shows.
+# Every one of these is only turned off (pm disable-user), never deleted.
+# mii-restore.bat turns all of them back on.
+
+com.google.android.feedback                 # Send feedback to Google
+com.google.android.marvin.talkback          # TalkBack screen reader
+com.google.android.play.games               # Google Play Games
+com.google.android.apps.turbo               # Device Health Services (battery saver for phones)
+com.google.android.tvrecommendations        # Old Android TV recommendation rows
+com.google.android.youtube.tvunplugged      # YouTube TV (US-only live TV service)
+com.android.printspooler                    # Printing
+com.android.bips                            # Printing (built-in print service)
+com.android.printservice.recommendation     # Printing (print service suggestions)
+com.android.wallpaper.livepicker            # Live wallpaper picker
+com.android.egg                             # Android version easter egg

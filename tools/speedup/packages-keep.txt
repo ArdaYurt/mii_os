@@ -1,0 +1,6 @@
+# Never turned off, and switched back on by every option (an earlier version turned them off).
+# With no screensaver left, Android puts the box to sleep when the screensaver would start,
+# so the box seemed to switch itself off after sitting idle.
+
+com.android.dreams.basic                    # Basic colours screensaver
+com.google.android.apps.tv.dreamx           # Ambient mode screensaver

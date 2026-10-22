@@ -92,6 +92,13 @@ it looks like `http://host:port/get.php?username=…&password=…&type=m3u_plus&
 To change the playlist later, use the ⚙ row at the top of the channel list, or **Menu** on the
 TV channel screen in the launcher.
 
+### Make the box faster
+
+Google TV runs many apps in the background that Mii_OS doesn't need. The speed-up script in
+[`tools/speedup`](tools/speedup) turns them off from your Windows laptop with adb, with nothing deleted
+and no root, and one double-click undoes it. Streaming apps, 4K, HDR, Dolby Vision and DRM are left
+alone. Steps are in [`tools/speedup/README.md`](tools/speedup/README.md).
+
 ## Using it
 
 | Remote | What it does |

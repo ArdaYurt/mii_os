@@ -1,0 +1,2 @@
+# Keep Windows line endings in batch files exactly as committed (cmd needs CRLF for labels).
+*.bat -text
