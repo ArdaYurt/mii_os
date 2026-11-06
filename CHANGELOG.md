@@ -6,6 +6,10 @@ here, at the top, in the same pull request: the first bullets are what the pop-u
 biggest change first. Pull requests that don't change `VERSION` still reach the box as builds of the
 current version.
 
+## 0.6.5
+
+- Sound effects: if one of your sound pack files can't be played, Mii_OS uses its own sound for it instead of staying silent, and Settings › Sounds lists which files didn't load
+
 ## 0.6.4
 
 - Nuvio's Install button works: Nuvio now downloads from its developer's GitHub, like Plezy, because the Play Store said "Item not found" on the Mi Box S

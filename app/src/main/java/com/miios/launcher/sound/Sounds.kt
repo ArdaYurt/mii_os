@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.SoundPool
 import android.os.SystemClock
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +43,10 @@ object Sounds {
     private var packStamp = -1L
     private var lastMove = 0L
     private var prefs: android.content.SharedPreferences? = null
+    private const val TAG = "MiiSounds"
+
+    /** Sound pack files that couldn't be played and were replaced by the built-in sound. */
+    val failed: MutableSet<String> = java.util.Collections.synchronizedSet(LinkedHashSet())
 
     /** The Sounds switch in Mii_OS Settings. State, so the Settings screen shows it live. */
     var enabled by mutableStateOf(true)
@@ -101,9 +106,30 @@ object Sounds {
                     .build(),
             )
             .build()
+        // SoundPool decodes each sound whole and refuses some files (anything over about 1 MB once
+        // decoded, or a format it can't read). A sound pack file that fails falls back to the
+        // built-in sound, so one bad file never leaves Mii_OS silent.
+        val customIds = HashMap<Int, Sfx>()
+        next.setOnLoadCompleteListener { p, sampleId, status ->
+            val sfx = synchronized(customIds) { customIds.remove(sampleId) } ?: return@setOnLoadCompleteListener
+            if (status != 0) {
+                Log.w(TAG, "Couldn't load your ${sfx.file} sound (${custom[sfx]?.name}, status $status); using the built-in one")
+                failed += sfx.file
+                ids[sfx.ordinal] = p.load(app, sfx.builtIn, 1)
+            }
+        }
+        failed.clear()
         for (sfx in Sfx.entries) {
             val file = custom[sfx]
-            ids[sfx.ordinal] = if (file != null) next.load(file.path, 1) else next.load(app, sfx.builtIn, 1)
+            ids[sfx.ordinal] = if (file != null && file.canRead()) {
+                synchronized(customIds) { next.load(file.path, 1).also { customIds[it] = sfx } }
+            } else {
+                if (file != null) {
+                    Log.w(TAG, "Can't read ${file.path}; using the built-in ${sfx.file} sound")
+                    failed += sfx.file
+                }
+                next.load(app, sfx.builtIn, 1)
+            }
         }
         pool = next
         // only the home-exit sound's length is needed: the home screen's return lasts as long as it
