@@ -66,6 +66,16 @@ fun SoundPanel(focused: SoundRow, progress: () -> Float) {
                 ToggleRow("Volume button sound", Sounds.volumeKeys && Sounds.enabled, focused == SoundRow.VolumeKeys)
                 ToggleRow("Menu music", Music.enabled, focused == SoundRow.Music)
                 SliderRow("Music volume", Music.volume, focused == SoundRow.MusicVolume, Music.enabled)
+                val failed = Sounds.failed.toList()
+                if (failed.isNotEmpty()) {
+                    Label(
+                        "Your file didn't load, using Mii_OS's: ${failed.joinToString(", ")}",
+                        unit * 1.1f,
+                        Color(0xFFD9534F),
+                        FontWeight.Bold,
+                        Modifier.fillMaxWidth(),
+                    )
+                }
                 Label("← → to change, OK to switch on or off, Back to close", unit * 1.1f, colors.inkSoft, FontWeight.Medium, Modifier.fillMaxWidth())
             }
         }
